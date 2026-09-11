@@ -1,0 +1,86 @@
+id: "handstand"
+name: "Handstand Hold"
+type: "duration"
+description: "Freestanding handstand - stack ankles over hips over shoulders"
+angles:
+  shoulder_angle:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [170, 180]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [170, 180]
+  body_line:
+    landmarks: [11, 23, 27]  # Left shoulder, hip, ankle
+    range: [170, 180]
+  wrist_angle:
+    landmarks: [15, 13, 11]  # Left wrist, elbow, shoulder (reverse for wrist extension)
+    range: [70, 110]
+states:
+  - name: "SETUP"
+    condition:
+      angle: "shoulder_angle"
+      operator: "<"
+      value: 160
+    next_state: "HOLD"
+    feedback: "Kick up to handstand"
+  - name: "HOLD"
+    condition:
+      angle: "shoulder_angle"
+      operator: ">="
+      value: 170
+    next_state: "HOLD"
+    feedback: "Hold steady - breathe"
+  - name: "BREAK"
+    condition:
+      angle: "shoulder_angle"
+      operator: "<"
+      value: 160
+    next_state: "SETUP"
+    feedback: "Lost alignment - reset"
+counter:
+  increment_on: "HOLD"  # Not used for duration type; time-based
+feedback:
+  - name: "banana_back"
+    description: "Arched lower back (banana handstand)"
+    angle: "body_line"
+    condition:
+      operator: "<"
+      value: 170
+    message: "Posterior pelvic tilt - flatten lower back"
+    priority: 10
+  - name: "shoulders_not_open"
+    description: "Shoulders not fully open (angle < 170)"
+    angle: "shoulder_angle"
+    condition:
+      operator: "<"
+      value: 170
+    message: "Push floor away - open shoulders fully"
+    priority: 9
+  - name: "hips_piked"
+    description: "Hips folded (pike position)"
+    angle: "hip_angle"
+    condition:
+      operator: "<"
+      value: 170
+    message: "Squeeze glutes - open hips completely"
+    priority: 8
+  - name: "wrist_collapse"
+    description: "Wrists collapsing (excessive extension)"
+    angle: "wrist_angle"
+    condition:
+      operator: ">"
+      value: 100
+    message: "Grip floor - distribute weight to fingertips"
+    priority: 7
+tempo:
+  hold: 1.0
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 25, 27]
+  color: "#00D4FF"
+progression:
+  category: "push_static"
+  tier: 3
+  prerequisites: ["pushup", "pike_pushup", "wall_handstand"]
+  progression_steps: ["wall_handstand", "freestanding_handstand_5s", "freestanding_handstand_15s", "freestanding_handstand_30s", "handstand_pushup"]
+  min_hold_seconds: 5
+  target_hold_seconds: 60

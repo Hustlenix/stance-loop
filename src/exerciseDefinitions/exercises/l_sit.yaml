@@ -1,0 +1,86 @@
+id: "l_sit"
+name: "L-Sit Progression"
+type: "duration"
+description: "Core compression - legs parallel to floor, hands supporting body"
+angles:
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [85, 95]  # 90 degrees hip flexion
+  knee_angle:
+    landmarks: [23, 25, 27]  # Left hip, knee, ankle
+    range: [170, 180]  # Knees locked
+  shoulder_depression:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [100, 130]  # Shoulders pushed down
+  torso_angle:
+    landmarks: [11, 23, 24]  # Left shoulder, left hip, right hip
+    range: [85, 95]  # Torso vertical
+states:
+  - name: "TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: "<"
+      value: 85
+    next_state: "TUCK"
+    feedback: "Knees to chest - compress"
+  - name: "ONE_LEG"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 85
+    next_state: "ONE_LEG"
+    feedback: "One leg extended - alternate"
+  - name: "FULL"
+    condition:
+      angle: "knee_angle"
+      operator: ">="
+      value: 170
+    next_state: "FULL"
+    feedback: "Both legs straight - toes pointed"
+counter:
+  increment_on: "FULL"
+feedback:
+  - name: "hips_too_low"
+    description: "Hips below hand level (not compressed)"
+    angle: "hip_angle"
+    condition:
+      operator: "<"
+      value: 80
+    message: "Push floor away - lift hips higher"
+    priority: 10
+  - name: "bent_knees"
+    description: "Knees not fully locked"
+    angle: "knee_angle"
+    condition:
+      operator: "<"
+      value: 165
+    message: "Lock knees - point toes"
+    priority: 9
+  - name: "shoulders_shrugged"
+    description: "Shoulders up by ears"
+    angle: "shoulder_depression"
+    condition:
+      operator: ">"
+      value: 135
+    message: "Depress shoulders - push down hard"
+    priority: 8
+  - name: "leaning_back"
+    description: "Torso leaning back (not vertical)"
+    angle: "torso_angle"
+    condition:
+      operator: "<"
+      value: 80
+    message: "Lean forward slightly - compress harder"
+    priority: 7
+tempo:
+  hold: 1.0
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 25, 27]
+  color: "#AA44FF"
+progression:
+  category: "core"
+  tier: 3
+  prerequisites: ["plank", "hollow_hold", "tuck_l_sit", "one_leg_l_sit"]
+  progression_steps: ["tuck_l_sit", "one_leg_l_sit", "full_l_sit", "l_sit_to_handstand"]
+  min_hold_seconds: 5
+  target_hold_seconds: 30

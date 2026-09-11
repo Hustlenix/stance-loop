@@ -1,0 +1,85 @@
+id: "planche"
+name: "Planche Progression"
+type: "duration"
+description: "Straight-arm horizontal hold - lean forward until feet leave ground"
+angles:
+  shoulder_angle:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [30, 60]  # Lean forward: shoulders in front of hands
+  body_line:
+    landmarks: [11, 23, 27]  # Left shoulder, hip, ankle
+    range: [175, 180]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [175, 180]
+  wrist_extension:
+    landmarks: [15, 13, 11]  # Left wrist, elbow, shoulder
+    range: [70, 100]
+states:
+  - name: "TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: "<"
+      value: 90
+    next_state: "TUCK"
+    feedback: "Knees to chest - round back slightly"
+  - name: "ADVANCED_TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 90
+    next_state: "ADVANCED_TUCK"
+    feedback: "Open hips to 90 - straighten back"
+  - name: "STRADDLE"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 140
+    next_state: "STRADDLE"
+    feedback: "Straddle wide - legs straight"
+  - name: "FULL"
+    condition:
+      angle: "shoulder_angle"
+      operator: "<="
+      value: 45
+    next_state: "FULL"
+    feedback: "Full planche - body horizontal"
+counter:
+  increment_on: "FULL"
+feedback:
+  - name: "bent_arms"
+    description: "Arms bending under load"
+    angle: "shoulder_angle"
+    condition:
+      operator: ">"
+      value: 70
+    message: "Lock elbows - straight arms only"
+    priority: 10
+  - name: "piked_hips"
+    description: "Hips folded (not straight line)"
+    angle: "body_line"
+    condition:
+      operator: "<"
+      value: 175
+    message: "Squeeze glutes - body perfectly straight"
+    priority: 9
+  - name: "wrist_collapse"
+    description: "Wrists collapsing backward"
+    angle: "wrist_extension"
+    condition:
+      operator: ">"
+      value: 95
+    message: "Lean forward more - weight over hands"
+    priority: 8
+tempo:
+  hold: 1.0
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 25, 27]
+  color: "#FFD700"
+progression:
+  category: "push_static"
+  tier: 5
+  prerequisites: ["pushup", "pseudo_planche_pushup", "tuck_planche", "advanced_tuck_planche", "straddle_planche"]
+  progression_steps: ["tuck_planche", "advanced_tuck_planche", "straddle_planche", "half_lay_planche", "full_planche"]
+  min_hold_seconds: 3
+  target_hold_seconds: 10

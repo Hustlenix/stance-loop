@@ -1,0 +1,83 @@
+id: "plank"
+name: "Plank Hold"
+type: "duration"
+description: "Core stability - straight line from head to heels"
+angles:
+  body_line:
+    landmarks: [11, 23, 27]  # Left shoulder, hip, ankle
+    range: [170, 180]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [170, 180]
+  shoulder_angle:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [80, 100]  # Forearm plank: ~90 degrees
+states:
+  - name: "SETUP"
+    condition:
+      angle: "body_line"
+      operator: "<"
+      value: 170
+    next_state: "HOLD"
+    feedback: "Set up - forearms down, body straight"
+  - name: "HOLD"
+    condition:
+      angle: "body_line"
+      operator: ">="
+      value: 170
+    next_state: "HOLD"
+    feedback: "Hold - breathe - squeeze glutes"
+  - name: "BREAK"
+    condition:
+      angle: "body_line"
+      operator: "<"
+      value: 165
+    next_state: "SETUP"
+    feedback: "Form broken - reset"
+counter:
+  increment_on: "HOLD"
+feedback:
+  - name: "hips_sag"
+    description: "Hips dropping (lordosis)"
+    angle: "body_line"
+    condition:
+      operator: "<"
+      value: 170
+    message: "Posterior pelvic tilt - tuck tailbone"
+    priority: 10
+  - name: "hips_pike"
+    description: "Hips too high (pike)"
+    angle: "body_line"
+    condition:
+      operator: ">"
+      value: 178
+    message: "Lower hips - straight line"
+    priority: 9
+  - name: "shoulders_shrugged"
+    description: "Shoulders up by ears"
+    angle: "shoulder_angle"
+    condition:
+      operator: ">"
+      value: 105
+    message: "Push floor away - shoulders down"
+    priority: 8
+  - name: "head_drop"
+    description: "Head hanging down"
+    angle: "shoulder_angle"
+    condition:
+      operator: "<"
+      value: 75
+    message: "Neutral neck - gaze at floor"
+    priority: 7
+tempo:
+  hold: 1.0
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 25, 27]
+  color: "#44FF44"
+progression:
+  category: "core"
+  tier: 1
+  prerequisites: []
+  progression_steps: ["knee_plank", "forearm_plank", "high_plank", "plank_reach", "plank_shoulder_tap"]
+  min_hold_seconds: 10
+  target_hold_seconds: 60

@@ -1,0 +1,95 @@
+id: "squat"
+name: "Bodyweight Squat"
+type: "standard"
+description: "Fundamental lower body movement - hip crease below knee"
+angles:
+  knee_angle:
+    landmarks: [23, 25, 27]  # Left hip, knee, ankle
+    range: [50, 170]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [50, 170]
+  torso_angle:
+    landmarks: [11, 23, 24]  # Left shoulder, left hip, right hip
+    range: [45, 80]
+  ankle_dorsiflexion:
+    landmarks: [25, 27, 31]  # Left knee, ankle, foot index
+    range: [60, 90]
+states:
+  - name: "STANDING"
+    condition:
+      angle: "knee_angle"
+      operator: ">"
+      value: 160
+    next_state: "DESCEND"
+    feedback: "Stand tall - brace core"
+  - name: "DESCEND"
+    condition:
+      angle: "knee_angle"
+      operator: "<"
+      value: 90
+    next_state: "BOTTOM"
+    feedback: "Sit back - knees track toes"
+  - name: "BOTTOM"
+    condition:
+      angle: "knee_angle"
+      operator: "<"
+      value: 70
+    next_state: "ASCEND"
+    feedback: "Hit depth - drive up"
+  - name: "ASCEND"
+    condition:
+      angle: "knee_angle"
+      operator: ">"
+      value: 160
+    next_state: "STANDING"
+    feedback: "Stand tall - squeeze glutes"
+counter:
+  increment_on: "STANDING"
+feedback:
+  - name: "knee_valgus"
+    description: "Knees caving inward"
+    angle: "knee_angle"
+    condition:
+      operator: "<"
+      value: 60
+    message: "Knees out - track over toes"
+    priority: 10
+  - name: "shallow_squat"
+    description: "Not reaching parallel"
+    angle: "knee_angle"
+    condition:
+      operator: ">"
+      value: 100
+    message: "Go deeper - hip crease below knee"
+    priority: 9
+  - name: "forward_lean"
+    description: "Excessive forward torso lean"
+    angle: "torso_angle"
+    condition:
+      operator: "<"
+      value: 40
+    message: "Chest up - weight in heels"
+    priority: 8
+  - name: "heels_lift"
+    description: "Heels coming off ground"
+    angle: "ankle_dorsiflexion"
+    condition:
+      operator: "<"
+      value: 60
+    message: "Heels down - improve ankle mobility"
+    priority: 7
+tempo:
+  up: 1.5
+  down: 2.0
+  hold: 0.5
+visualization:
+  highlighted_joints: [11, 23, 25, 27]
+  color: "#00AAFF"
+progression:
+  category: "legs"
+  tier: 1
+  prerequisites: []
+  progression_steps: ["box_squat", "goblet_squat", "squat", "jump_squat", "pistol_squat"]
+  min_hold_seconds: 0
+  target_hold_seconds: 0

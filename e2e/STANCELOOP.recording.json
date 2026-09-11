@@ -1,0 +1,1345 @@
+{
+    "title": "STANCELOOP",
+    "steps": [
+        {
+            "type": "setViewport",
+            "width": 1200,
+            "height": 729,
+            "deviceScaleFactor": 1,
+            "isMobile": false,
+            "hasTouch": false,
+            "isLandscape": false
+        },
+        {
+            "type": "navigate",
+            "url": "http://127.0.0.1:5173/",
+            "assertedEvents": [
+                {
+                    "type": "navigation",
+                    "url": "http://127.0.0.1:5173/",
+                    "title": "StanceLoop — Live form coaching"
+                }
+            ]
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Drills"
+                ],
+                [
+                    "nav > button:nth-of-type(2)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[2]"
+                ],
+                [
+                    "pierce/nav > button:nth-of-type(2)"
+                ],
+                [
+                    "text/Drills"
+                ]
+            ],
+            "offsetY": 13.19999885559082,
+            "offsetX": 30.02496337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Duels"
+                ],
+                [
+                    "header button:nth-of-type(3)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[3]"
+                ],
+                [
+                    "pierce/header button:nth-of-type(3)"
+                ],
+                [
+                    "text/Duels"
+                ]
+            ],
+            "offsetY": 11.19999885559082,
+            "offsetX": 40.67498779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/History"
+                ],
+                [
+                    "button:nth-of-type(4)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[4]"
+                ],
+                [
+                    "pierce/button:nth-of-type(4)"
+                ],
+                [
+                    "text/History"
+                ]
+            ],
+            "offsetY": 12.19999885559082,
+            "offsetX": 28.76251220703125
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Drills"
+                ],
+                [
+                    "nav > button:nth-of-type(2)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[2]"
+                ],
+                [
+                    "pierce/nav > button:nth-of-type(2)"
+                ],
+                [
+                    "text/Drills"
+                ]
+            ],
+            "offsetY": 15.19999885559082,
+            "offsetX": 10.02496337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/FOUNDATION Push-up Build clean reps, not fast reps. LIVE CV →"
+                ],
+                [
+                    "button.lime"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div[1]/button[1]"
+                ],
+                [
+                    "pierce/button.lime"
+                ],
+                [
+                    "text/FOUNDATIONPush-upBuild"
+                ]
+            ],
+            "offsetY": 149.02467346191406,
+            "offsetX": 353
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Enable camera →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Enable camera→"
+                ]
+            ],
+            "offsetY": 7,
+            "offsetX": 207.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "video"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/div/video"
+                ],
+                [
+                    "pierce/video"
+                ]
+            ],
+            "offsetY": 100.4000015258789,
+            "offsetX": 679.2000007629395
+        },
+        {
+            "type": "doubleClick",
+            "target": "main",
+            "selectors": [
+                [
+                    "video"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/div/video"
+                ],
+                [
+                    "pierce/video"
+                ]
+            ],
+            "offsetY": 87.4000015258789,
+            "offsetX": 683.2000007629395
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aside"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside"
+                ],
+                [
+                    "pierce/aside"
+                ]
+            ],
+            "offsetY": 452.1999969482422,
+            "offsetX": 236.13751220703125
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div:nth-of-type(2) > strong"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[2]/div[2]/strong"
+                ],
+                [
+                    "pierce/div:nth-of-type(2) > strong"
+                ],
+                [
+                    "text/tracking lost"
+                ]
+            ],
+            "offsetY": 1.5,
+            "offsetX": 58.27496337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.calibration-card"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[3]"
+                ],
+                [
+                    "pierce/div.calibration-card"
+                ]
+            ],
+            "offsetY": 28.699981689453125,
+            "offsetX": 207.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Start coached set →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Start coached"
+                ]
+            ],
+            "offsetY": 13,
+            "offsetX": 154.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Finish set ■"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[5]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Finish set ■"
+                ]
+            ],
+            "offsetY": 3.79998779296875,
+            "offsetX": 173.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Train again"
+                ],
+                [
+                    "button.subtle-button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/div[4]/button[2]"
+                ],
+                [
+                    "pierce/button.subtle-button"
+                ],
+                [
+                    "text/Train again"
+                ]
+            ],
+            "offsetY": 27.61248779296875,
+            "offsetX": 40.75
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aside"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside"
+                ],
+                [
+                    "pierce/aside"
+                ]
+            ],
+            "offsetY": 16,
+            "offsetX": 265.13751220703125
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Exit live coach"
+                ],
+                [
+                    "header > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/header/button"
+                ],
+                [
+                    "pierce/header > button"
+                ],
+                [
+                    "text/←"
+                ]
+            ],
+            "offsetY": 18.5,
+            "offsetX": 8
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/BALANCE PRO Handstand hold Stack shoulders, ribs and hips. LIVE CV →"
+                ],
+                [
+                    "button.cyan"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div[1]/button[2]"
+                ],
+                [
+                    "pierce/button.cyan"
+                ],
+                [
+                    "text/BALANCEPROHandstand"
+                ]
+            ],
+            "offsetY": 141.32498168945312,
+            "offsetX": 85
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Activate Pro demo →"
+                ],
+                [
+                    "button.primary-button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button[2]"
+                ],
+                [
+                    "pierce/button.primary-button"
+                ],
+                [
+                    "text/Activate Pro"
+                ]
+            ],
+            "offsetY": 41.462493896484375,
+            "offsetX": 163.69998168945312
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/BALANCE Handstand hold Stack shoulders, ribs and hips. LIVE CV →",
+                    "aria/[role=\"sectionfooter\"]"
+                ],
+                [
+                    "button.cyan > footer"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div[1]/button[2]/footer"
+                ],
+                [
+                    "pierce/button.cyan > footer"
+                ]
+            ],
+            "offsetY": 4.125,
+            "offsetX": 271.1999816894531
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.coach-actions"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]"
+                ],
+                [
+                    "pierce/div.coach-actions"
+                ]
+            ],
+            "offsetY": 1,
+            "offsetX": 146.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Enable camera →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Enable camera→"
+                ]
+            ],
+            "offsetY": 19,
+            "offsetX": 136.33746337890625
+        },
+        {
+            "type": "doubleClick",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Start coached set →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Start coached"
+                ]
+            ],
+            "offsetY": 13,
+            "offsetX": 140.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 16.587501525878906,
+            "offsetX": 17.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Jab-cross"
+                ],
+                [
+                    "button.orange > h3"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div[1]/button[3]/h3"
+                ],
+                [
+                    "pierce/button.orange > h3"
+                ],
+                [
+                    "text/Jab-cross"
+                ]
+            ],
+            "offsetY": 21.1624755859375,
+            "offsetX": 75.20001220703125
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Enable camera →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Enable camera→"
+                ]
+            ],
+            "offsetY": 32,
+            "offsetX": 89.33746337890625
+        },
+        {
+            "type": "keyDown",
+            "target": "main",
+            "key": "Enter"
+        },
+        {
+            "type": "keyUp",
+            "key": "Enter",
+            "target": "main"
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Start coached set →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Start coached"
+                ]
+            ],
+            "offsetY": 17,
+            "offsetX": 68.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Finish set ■"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[5]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Finish set ■"
+                ]
+            ],
+            "offsetY": 13,
+            "offsetX": 68.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 9.787498474121094,
+            "offsetX": 9.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.how-card > div"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div[2]/div"
+                ],
+                [
+                    "pierce/div.how-card > div"
+                ]
+            ],
+            "offsetY": 23.32501220703125,
+            "offsetX": 1076.2000007629395
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.how-card > div"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div[2]/div"
+                ],
+                [
+                    "pierce/div.how-card > div"
+                ]
+            ],
+            "offsetY": 23.32501220703125,
+            "offsetX": 957.2000007629395
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Duels"
+                ],
+                [
+                    "header button:nth-of-type(3)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[3]"
+                ],
+                [
+                    "pierce/header button:nth-of-type(3)"
+                ],
+                [
+                    "text/Duels"
+                ]
+            ],
+            "offsetY": 24.19999885559082,
+            "offsetX": 15.875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Accept →"
+                ],
+                [
+                    "section.section-block button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/section[3]/div/article/footer/button"
+                ],
+                [
+                    "pierce/section.section-block button"
+                ],
+                [
+                    "text/Accept →"
+                ]
+            ],
+            "offsetY": 12.48748779296875,
+            "offsetX": 29.524993896484375
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Enable camera →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Enable camera→"
+                ]
+            ],
+            "offsetY": 48,
+            "offsetX": 93.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Start coached set →"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[4]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Start coached"
+                ]
+            ],
+            "offsetY": 9,
+            "offsetX": 75.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Finish set ■"
+                ],
+                [
+                    "section button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/main/section/aside/div[5]/button"
+                ],
+                [
+                    "pierce/section button"
+                ],
+                [
+                    "text/Finish set ■"
+                ]
+            ],
+            "offsetY": 6,
+            "offsetX": 75.33746337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 19.787498474121094,
+            "offsetX": 7.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/History"
+                ],
+                [
+                    "button:nth-of-type(4)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[4]"
+                ],
+                [
+                    "pierce/button:nth-of-type(4)"
+                ],
+                [
+                    "text/History"
+                ]
+            ],
+            "offsetY": 11.399999618530273,
+            "offsetX": 46.96246337890625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/H Handstand hold 5 Sept, 21:56 · 1s stable Squeeze the ribs back over your hips. Stack your ankles over your shoulders. 100/100 ›"
+                ],
+                [
+                    "main button:nth-of-type(1)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div/button[1]"
+                ],
+                [
+                    "pierce/main button:nth-of-type(1)"
+                ]
+            ],
+            "offsetY": 61.625,
+            "offsetX": 606
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 5.787498474121094,
+            "offsetX": 0.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "button:nth-of-type(2) > div.history-events"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div/button[2]/div[3]"
+                ],
+                [
+                    "pierce/button:nth-of-type(2) > div.history-events"
+                ]
+            ],
+            "offsetY": 3.024993896484375,
+            "offsetX": 357.375
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 7.787498474121094,
+            "offsetX": 12.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/H Handstand hold 5 Sept, 21:54 · 0s stable Move until your whole body is visible. 0/100 ›"
+                ],
+                [
+                    "main button:nth-of-type(3)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div/button[3]"
+                ],
+                [
+                    "pierce/main button:nth-of-type(3)"
+                ]
+            ],
+            "offsetY": 52.625,
+            "offsetX": 745
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 20.587501525878906,
+            "offsetX": 6.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/P Push-up 5 Sept, 21:54 · 18 reps verified Move until your whole body is visible. Straighten your line — don’t let the hips sag. 0/100 ›"
+                ],
+                [
+                    "main button:nth-of-type(4)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/div/button[4]"
+                ],
+                [
+                    "pierce/main button:nth-of-type(4)"
+                ]
+            ],
+            "offsetY": 60.625,
+            "offsetX": 167
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/×"
+                ],
+                [
+                    "section > button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/section/button"
+                ],
+                [
+                    "pierce/section > button"
+                ],
+                [
+                    "text/×"
+                ]
+            ],
+            "offsetY": 25.787498474121094,
+            "offsetX": 8.29998779296875
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/PRO ACTIVE"
+                ],
+                [
+                    "button.membership"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/button[2]"
+                ],
+                [
+                    "pierce/button.membership"
+                ],
+                [
+                    "text/PRO ACTIVE"
+                ]
+            ],
+            "offsetY": 13.19999885559082,
+            "offsetX": 66.5999755859375
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Notifications"
+                ],
+                [
+                    "button.bell"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/button[1]"
+                ],
+                [
+                    "pierce/button.bell"
+                ],
+                [
+                    "text/⌁"
+                ]
+            ],
+            "offsetY": 16.731361389160156,
+            "offsetX": 12.85040283203125
+        },
+        {
+            "type": "doubleClick",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/PRO ACTIVE"
+                ],
+                [
+                    "button.membership"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/button[2]"
+                ],
+                [
+                    "pierce/button.membership"
+                ],
+                [
+                    "text/PRO ACTIVE"
+                ]
+            ],
+            "offsetY": 25.19999885559082,
+            "offsetX": 25.5999755859375
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.topbar-actions > div"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/div"
+                ],
+                [
+                    "pierce/div.topbar-actions > div"
+                ],
+                [
+                    "text/LR"
+                ]
+            ],
+            "offsetY": 11.399999618530273,
+            "offsetX": 16
+        },
+        {
+            "type": "doubleClick",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/PRO ACTIVE"
+                ],
+                [
+                    "button.membership"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/button[2]"
+                ],
+                [
+                    "pierce/button.membership"
+                ],
+                [
+                    "text/PRO ACTIVE"
+                ]
+            ],
+            "offsetY": 18.19999885559082,
+            "offsetX": 37.5999755859375
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Notifications"
+                ],
+                [
+                    "button.bell"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/button[1]"
+                ],
+                [
+                    "pierce/button.bell"
+                ],
+                [
+                    "text/⌁"
+                ]
+            ],
+            "offsetY": 11.731361389160156,
+            "offsetX": 24.85040283203125
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.topbar-actions > div"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[2]/div"
+                ],
+                [
+                    "pierce/div.topbar-actions > div"
+                ],
+                [
+                    "text/LR"
+                ]
+            ],
+            "offsetY": 27.399999618530273,
+            "offsetX": 9
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Overview"
+                ],
+                [
+                    "nav > button:nth-of-type(1)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/nav/button[1]"
+                ],
+                [
+                    "pierce/nav > button:nth-of-type(1)"
+                ],
+                [
+                    "text/Overview"
+                ]
+            ],
+            "offsetY": 27.19999885559082,
+            "offsetX": 58.225006103515625
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "header span:nth-of-type(2)"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/header/div[1]/span[2]"
+                ],
+                [
+                    "pierce/header span:nth-of-type(2)"
+                ],
+                [
+                    "text/STANCELOOP"
+                ]
+            ],
+            "offsetY": 8.399999618530273,
+            "offsetX": 58
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "div.challenge-teaser > div"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/section[4]/div[2]/div"
+                ],
+                [
+                    "pierce/div.challenge-teaser > div"
+                ],
+                [
+                    "text/⚡The 30-second"
+                ]
+            ],
+            "offsetY": 50,
+            "offsetX": 154.7249755859375
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Enter duel →"
+                ],
+                [
+                    "div.challenge-teaser button"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/main/section[4]/div[2]/div/button"
+                ],
+                [
+                    "pierce/div.challenge-teaser button"
+                ],
+                [
+                    "text/Enter duel →"
+                ]
+            ],
+            "offsetY": 5.70001220703125,
+            "offsetX": 33.75
+        },
+        {
+            "type": "navigate",
+            "url": "about:blank",
+            "assertedEvents": [
+                {
+                    "type": "navigation",
+                    "url": "about:blank",
+                    "title": ""
+                }
+            ]
+        },
+        {
+            "type": "doubleClick",
+            "target": "main",
+            "selectors": [
+                [
+                    "body"
+                ],
+                [
+                    "xpath//html/body"
+                ],
+                [
+                    "pierce/body"
+                ]
+            ],
+            "offsetY": 325,
+            "offsetX": 781
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "body"
+                ],
+                [
+                    "xpath//html/body"
+                ],
+                [
+                    "pierce/body"
+                ]
+            ],
+            "offsetY": 325,
+            "offsetX": 781
+        },
+        {
+            "type": "keyDown",
+            "target": "main",
+            "key": "Control"
+        },
+        {
+            "type": "keyDown",
+            "target": "main",
+            "key": "Shift"
+        },
+        {
+            "type": "keyDown",
+            "target": "main",
+            "key": "R",
+            "assertedEvents": [
+                {
+                    "type": "navigation"
+                }
+            ]
+        },
+        {
+            "type": "keyUp",
+            "key": "Shift",
+            "target": "main"
+        },
+        {
+            "type": "keyUp",
+            "key": "Control",
+            "target": "main"
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "body"
+                ],
+                [
+                    "xpath//html/body"
+                ],
+                [
+                    "pierce/body"
+                ]
+            ],
+            "offsetY": 257,
+            "offsetX": 407,
+            "assertedEvents": [
+                {
+                    "type": "navigation"
+                }
+            ]
+        },
+        {
+            "type": "keyUp",
+            "key": "Tab",
+            "target": "main"
+        }
+    ]
+}

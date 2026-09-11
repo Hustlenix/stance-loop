@@ -1,0 +1,78 @@
+id: "pushup"
+name: "Push-up"
+type: "standard"
+description: "Classic chest exercise - maintain straight body line from head to heels"
+angles:
+  elbow_angle:
+    landmarks: [11, 13, 15]  # Left shoulder, elbow, wrist
+    range: [30, 170]
+  body_line:
+    landmarks: [11, 23, 27]  # Left shoulder, hip, ankle
+    range: [160, 180]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [160, 180]
+states:
+  - name: "UP"
+    condition:
+      angle: "elbow_angle"
+      operator: ">"
+      value: 150
+    next_state: "DOWN"
+    feedback: "Good top position"
+  - name: "DOWN"
+    condition:
+      angle: "elbow_angle"
+      operator: "<"
+      value: 70
+    next_state: "UP"
+    feedback: "Good depth"
+counter:
+  increment_on: "UP"
+feedback:
+  - name: "hips_sag"
+    description: "Hips dropping below shoulder line"
+    angle: "body_line"
+    condition:
+      operator: "<"
+      value: 165
+    message: "Engage core - keep hips level with shoulders"
+    priority: 10
+  - name: "hips_pike"
+    description: "Hips raised too high (pike position)"
+    angle: "body_line"
+    condition:
+      operator: ">"
+      value: 178
+    message: "Lower hips - straight line from head to heels"
+    priority: 9
+  - name: "elbow_flare"
+    description: "Elbows flaring out > 45 degrees"
+    angle: "elbow_angle"
+    condition:
+      operator: ">"
+      value: 160
+    message: "Keep elbows at 45 degrees from body"
+    priority: 8
+  - name: "shallow_depth"
+    description: "Not going deep enough"
+    angle: "elbow_angle"
+    condition:
+      operator: ">"
+      value: 100
+    message: "Go lower - chest closer to floor"
+    priority: 5
+tempo:
+  up: 1.5
+  down: 2.0
+  hold: 0.5
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 27]
+  color: "#D8FF65"
+progression:
+  category: "push_static"
+  tier: 1
+  prerequisites: []
+  progression_steps: ["knee_pushup", "incline_pushup", "pushup", "diamond_pushup", "pseudo_planche_pushup"]
+  min_hold_seconds: 0
+  target_hold_seconds: 0

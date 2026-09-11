@@ -1,0 +1,99 @@
+id: "back_lever"
+name: "Back Lever Progression"
+type: "duration"
+description: "Horizontal pull - body parallel to ground, arms straight, facing down"
+angles:
+  shoulder_angle:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [160, 180]
+  body_line:
+    landmarks: [11, 23, 27]  # Left shoulder, hip, ankle
+    range: [175, 180]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [175, 180]
+  shoulder_extension:
+    landmarks: [11, 13, 15]  # Left shoulder, elbow, wrist
+    range: [40, 80]  # Arms behind body
+states:
+  - name: "SKIN_THE_CAT"
+    condition:
+      angle: "shoulder_extension"
+      operator: ">"
+      value: 60
+    next_state: "SKIN_THE_CAT"
+    feedback: "Rotate through - build shoulder mobility"
+  - name: "TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: "<"
+      value: 90
+    next_state: "TUCK"
+    feedback: "Tuck tight - lower under control"
+  - name: "ADVANCED_TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 90
+    next_state: "ADVANCED_TUCK"
+    feedback: "Open hips - straight line"
+  - name: "ONE_LEG"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 140
+    next_state: "ONE_LEG"
+    feedback: "One leg extended"
+  - name: "STRADDLE"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 160
+    next_state: "STRADDLE"
+    feedback: "Straddle wide"
+  - name: "FULL"
+    condition:
+      angle: "body_line"
+      operator: ">="
+      value: 175
+    next_state: "FULL"
+    feedback: "Full back lever - horizontal"
+counter:
+  increment_on: "FULL"
+feedback:
+  - name: "bent_arms"
+    description: "Arms bending under load"
+    angle: "shoulder_angle"
+    condition:
+      operator: "<"
+      value: 160
+    message: "Lock elbows - straight arms"
+    priority: 10
+  - name: "piked_hips"
+    description: "Hips folded"
+    angle: "body_line"
+    condition:
+      operator: "<"
+      value: 175
+    message: "Open hips - glutes squeezed"
+    priority: 9
+  - name: "shoulder_flexion"
+    description: "Shoulders not extended enough"
+    angle: "shoulder_extension"
+    condition:
+      operator: "<"
+      value: 45
+    message: "Rotate shoulders back - arms behind torso"
+    priority: 8
+tempo:
+  hold: 1.0
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 25, 27]
+  color: "#FF4444"
+progression:
+  category: "pull_static"
+  tier: 4
+  prerequisites: ["pullup", "skin_the_cat", "german_hang", "tuck_back_lever", "advanced_tuck_back_lever"]
+  progression_steps: ["german_hang", "tuck_back_lever", "advanced_tuck_back_lever", "one_leg_back_lever", "straddle_back_lever", "full_back_lever"]
+  min_hold_seconds: 3
+  target_hold_seconds: 10

@@ -1,0 +1,92 @@
+id: "front_lever"
+name: "Front Lever Progression"
+type: "duration"
+description: "Horizontal pull - body parallel to ground, arms straight, facing up"
+angles:
+  shoulder_angle:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [160, 180]  # Arms straight, shoulders depressed
+  body_line:
+    landmarks: [11, 23, 27]  # Left shoulder, hip, ankle
+    range: [175, 180]
+  hip_angle:
+    landmarks: [11, 23, 25]  # Left shoulder, hip, knee
+    range: [175, 180]
+  scapular_depression:
+    landmarks: [11, 23, 24]  # Left shoulder, left hip, right hip (proxy for scapular position)
+    range: [5, 25]
+states:
+  - name: "TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: "<"
+      value: 90
+    next_state: "TUCK"
+    feedback: "Knees to chest - pull bar to hips"
+  - name: "ADVANCED_TUCK"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 90
+    next_state: "ADVANCED_TUCK"
+    feedback: "Open hips - straighten back"
+  - name: "ONE_LEG"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 140
+    next_state: "ONE_LEG"
+    feedback: "One leg extended - other tucked"
+  - name: "STRADDLE"
+    condition:
+      angle: "hip_angle"
+      operator: ">="
+      value: 160
+    next_state: "STRADDLE"
+    feedback: "Straddle wide - legs straight"
+  - name: "FULL"
+    condition:
+      angle: "body_line"
+      operator: ">="
+      value: 175
+    next_state: "FULL"
+    feedback: "Full front lever - body horizontal"
+counter:
+  increment_on: "FULL"
+feedback:
+  - name: "bent_arms"
+    description: "Arms bending - not straight-arm strength"
+    angle: "shoulder_angle"
+    condition:
+      operator: "<"
+      value: 160
+    message: "Lock elbows - depress and retract scapulae"
+    priority: 10
+  - name: "arched_back"
+    description: "Lower back arching (not hollow)"
+    angle: "body_line"
+    condition:
+      operator: "<"
+      value: 175
+    message: "Posterior pelvic tilt - hollow body"
+    priority: 9
+  - name: "hips_dropping"
+    description: "Hips below shoulder line"
+    angle: "hip_angle"
+    condition:
+      operator: "<"
+      value: 170
+    message: "Raise hips - drive toes toward ceiling"
+    priority: 8
+tempo:
+  hold: 1.0
+visualization:
+  highlighted_joints: [11, 13, 15, 23, 25, 27]
+  color: "#00FF88"
+progression:
+  category: "pull_static"
+  tier: 5
+  prerequisites: ["pullup", "skin_the_cat", "tuck_front_lever", "advanced_tuck_front_lever", "one_leg_front_lever", "straddle_front_lever"]
+  progression_steps: ["tuck_front_lever", "advanced_tuck_front_lever", "one_leg_front_lever", "straddle_front_lever", "half_lay_front_lever", "full_front_lever"]
+  min_hold_seconds: 3
+  target_hold_seconds: 15

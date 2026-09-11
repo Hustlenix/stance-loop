@@ -1,0 +1,134 @@
+id: "jab_cross"
+name: "Jab-Cross Combination"
+type: "standard"
+description: "Fundamental boxing combination - jab (lead hand) followed by cross (rear hand)"
+angles:
+  # Jab side (assuming orthodox stance - left lead)
+  jab_elbow:
+    landmarks: [11, 13, 15]  # Left shoulder, elbow, wrist
+    range: [160, 180]
+  jab_shoulder:
+    landmarks: [13, 11, 23]  # Left elbow, shoulder, hip
+    range: [80, 120]
+  # Cross side (right rear)
+  cross_elbow:
+    landmarks: [12, 14, 16]  # Right shoulder, elbow, wrist
+    range: [160, 180]
+  cross_shoulder:
+    landmarks: [14, 12, 24]  # Right elbow, shoulder, hip
+    range: [80, 120]
+  # Stance
+  lead_knee:
+    landmarks: [23, 25, 27]  # Left hip, knee, ankle
+    range: [130, 160]
+  rear_knee:
+    landmarks: [24, 26, 28]  # Right hip, knee, ankle
+    range: [110, 140]
+  torso_rotation:
+    landmarks: [11, 23, 24]  # Left shoulder, left hip, right hip
+    range: [10, 45]
+states:
+  - name: "GUARD"
+    condition:
+      angle: "jab_elbow"
+      operator: "<"
+      value: 100
+    next_state: "JAB_EXTEND"
+    feedback: "Hands up - chin tucked"
+  - name: "JAB_EXTEND"
+    condition:
+      angle: "jab_elbow"
+      operator: ">"
+      value: 165
+    next_state: "JAB_RETRACT"
+    feedback: "Snap jab - rotate shoulder"
+  - name: "JAB_RETRACT"
+    condition:
+      angle: "jab_elbow"
+      operator: "<"
+      value: 100
+    next_state: "CROSS_EXTEND"
+    feedback: "Retract fast - cross coming"
+  - name: "CROSS_EXTEND"
+    condition:
+      angle: "cross_elbow"
+      operator: ">"
+      value: 165
+    next_state: "CROSS_RETRACT"
+    feedback: "Drive cross - rotate hip and shoulder"
+  - name: "CROSS_RETRACT"
+    condition:
+      angle: "cross_elbow"
+      operator: "<"
+      value: 100
+    next_state: "GUARD"
+    feedback: "Return to guard - reset stance"
+counter:
+  increment_on: "GUARD"  # Count full jab-cross cycles
+feedback:
+  - name: "dropping_hands"
+    description: "Hands dropping below chin level"
+    angle: "jab_elbow"
+    condition:
+      operator: "<"
+      value: 60
+    message: "Keep hands at cheek level - protect chin"
+    priority: 10
+  - name: "telegraphing_jab"
+    description: "Elbow flaring before jab (telegraphing)"
+    angle: "jab_shoulder"
+    condition:
+      operator: ">"
+      value: 130
+    message: "Jab from guard - no wind-up"
+    priority: 9
+  - name: "cross_no_rotation"
+    description: "Cross thrown without hip/shoulder rotation"
+    angle: "torso_rotation"
+    condition:
+      operator: "<"
+      value: 15
+    message: "Rotate hips and shoulders - power from ground up"
+    priority: 8
+  - name: "leaning_forward"
+    description: "Leaning too far forward (off balance)"
+    angle: "lead_knee"
+    condition:
+      operator: ">"
+      value: 165
+    message: "Stay centered - weight 50/50"
+    priority: 7
+  - name: "short_cross"
+    description: "Cross not fully extended"
+    angle: "cross_elbow"
+    condition:
+      operator: "<"
+      value: 150
+    message: "Extend fully - punch through target"
+    priority: 6
+  - name: "slow_retraction"
+    description: "Hands slow to return to guard"
+    angle: "jab_elbow"
+    condition:
+      operator: ">"
+      value: 120
+    message: "Retract fast - defense first"
+    priority: 5
+tempo:
+  up: 0.3
+  down: 0.3
+  hold: 0.1
+visualization:
+  highlighted_joints: [11, 13, 15, 12, 14, 16, 23, 24, 25, 26]
+  color: "#FF6B35"
+combat:
+  strike_type: "jab_cross"
+  technique_angles: ["jab_elbow", "cross_elbow", "jab_shoulder", "cross_shoulder", "torso_rotation"]
+  reference_video_id: "jab_cross_orthodox_pro"
+progression:
+  category: "combat"
+  tier: 1
+  prerequisites: []
+  progression_steps: ["jab_only", "jab_cross", "jab_cross_hook", "jab_cross_hook_cross", "combo_5_punch"]
+  min_hold_seconds: 0
+  target_hold_seconds: 0

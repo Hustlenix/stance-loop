@@ -161,13 +161,20 @@ export const getChallenges = () => read<Challenge[]>(CHALLENGES_KEY, []);
 export const saveChallenge = (challenge: Challenge) => write(CHALLENGES_KEY, [challenge, ...getChallenges()].slice(0, 20));
 export const getPro = () => read<boolean>(PRO_KEY, false);
 export const setPro = (value: boolean) => write(PRO_KEY, value);
-export const getProfile = () => read<AthleteProfile>(PROFILE_KEY, {
-  displayName: "Athlete",
-  focus: "both",
-  onboardingComplete: false,
-  analyticsConsent: false,
-  rawVideoRetention: "never",
-});
+/** Hydrate a partial or legacy profile payload up to the full AthleteProfile shape. */
+export function hydrateProfile(raw: Partial<AthleteProfile>): AthleteProfile {
+  return {
+    displayName: typeof raw.displayName === "string" && raw.displayName.trim() ? raw.displayName : "Athlete",
+    focus: raw.focus === "calisthenics" || raw.focus === "striking" || raw.focus === "both" ? raw.focus : "both",
+    onboardingComplete: raw.onboardingComplete === true,
+    acceptedSafetyNoticeAt: typeof raw.acceptedSafetyNoticeAt === "number" ? raw.acceptedSafetyNoticeAt : undefined,
+    analyticsConsent: raw.analyticsConsent === true,
+    rawVideoRetention: raw.rawVideoRetention === "ask" ? "ask" : "never",
+    acceptedTermsVersion: typeof raw.acceptedTermsVersion === "string" ? raw.acceptedTermsVersion : undefined,
+    acceptedTermsAt: typeof raw.acceptedTermsAt === "number" ? raw.acceptedTermsAt : undefined,
+  };
+}
+export const getProfile = () => hydrateProfile(read<Partial<AthleteProfile>>(PROFILE_KEY, {}));
 export const saveProfile = (profile: AthleteProfile) => write(PROFILE_KEY, profile);
 export const getPreferences = () => normalizePreferences(read<Partial<Preferences>>(PREFERENCES_KEY, {}));
 export const savePreferences = (preferences: Preferences) => write(PREFERENCES_KEY, preferences);

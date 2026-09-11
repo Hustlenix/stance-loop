@@ -12,18 +12,13 @@ import { currentChallengeVersions, decodeChallenge, defaultProtocolForDrill, enc
 import { buildRecap, buildSharePayload, formatAtSecond, partialsSummaryForSession } from "./recap";
 import { consistency, perDrillTrends, personalBests, suggestWeeklyPlan, weakPoints } from "./progress";
 import type { AthleteProfile, Challenge, DrillId, DrillLevel, Preferences, ScriptVerbosity, Session, SessionFeedback } from "./types";
-import { createInitialProgress, DEFAULT_ROADMAP_CONFIG, formatDuration, generateRoadmapSession, getEffectiveLevel, getNextRecommendedExercise, getOverallProgressPercent, updateProgressAfterSession, type RoadmapConfig, type RoadmapProgress, type RoadmapSession } from "./roadmap";
-import { getExerciseById, getExercisesByLevel, getLevelName, isExerciseUnlocked, type CalisthenicsLevel } from "./curriculum/calisthenics";
+import { createInitialProgress, DEFAULT_ROADMAP_CONFIG, generateRoadmapSession, getEffectiveLevel, getNextRecommendedExercise, updateProgressAfterSession, type RoadmapConfig, type RoadmapProgress, type RoadmapSession } from "./roadmap";
+import { getLevelName, type CalisthenicsLevel } from "./curriculum/calisthenics";
+import RoadmapView, { ROADMAP_LEVELS } from "./roadmap-view";
+import TermsModal from "./components/TermsModal";
+import { TERMS_VERSION } from "./terms";
 
 type View = "home" | "library" | "roadmap" | "duels" | "history";
-
-const ROADMAP_LEVELS: CalisthenicsLevel[] = [0, 1, 2, 3, 4, 5, 6];
-
-const roadmapStatStyle = {
-  padding: "10px 12px",
-  background: "rgba(236, 246, 226, 0.05)",
-  borderRadius: 8,
-} as const;
 
 function formatDate(timestamp: number) {
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(timestamp);
@@ -138,7 +133,24 @@ function Onboarding({ onComplete }: { onComplete: (profile: AthleteProfile) => v
   const [name, setName] = useState("");
   const [focus, setFocus] = useState<AthleteProfile["focus"]>("both");
   const [acceptedSafety, setAcceptedSafety] = useState(false);
-  return <div className="modal-backdrop"><section className="onboarding-modal"><span className="brand-mark">S</span><span className="kicker">WELCOME TO STANCELOOP</span><h1>Build skill with evidence.</h1><p>StanceLoop reads movement landmarks on your device. It does not diagnose injury, guarantee safe technique, or replace a qualified coach.</p><label>WHAT SHOULD WE CALL YOU?<input value={name} maxLength={32} placeholder="Your first name" onChange={(event) => setName(event.target.value)} /></label><label>YOUR CURRENT FOCUS<select value={focus} onChange={(event) => setFocus(event.target.value as AthleteProfile["focus"])}><option value="both">Calisthenics + striking</option><option value="calisthenics">Calisthenics</option><option value="striking">Solo striking</option></select></label><label className="consent-check"><input type="checkbox" checked={acceptedSafety} onChange={(event) => setAcceptedSafety(event.target.checked)} /><span>I understand that I should stop if I feel pain, dizziness, or unsafe, and that this is educational movement feedback.</span></label><button className="primary-button" disabled={!acceptedSafety} onClick={() => onComplete({ displayName: name.trim() || "Athlete", focus, onboardingComplete: true, acceptedSafetyNoticeAt: Date.now(), analyticsConsent: false, rawVideoRetention: "never" })}>Start safely <span>→</span></button><small>Raw camera video is never stored by this MVP.</small></section></div>;
+  return (
+    <div className="modal-backdrop">
+      <section className="onboarding-modal" data-testid="onboarding-modal">
+        <span className="brand-mark">S</span>
+        <span className="kicker">WELCOME TO STANCELOOP</span>
+        <h1>Build skill with evidence.</h1>
+        <p>StanceLoop reads movement landmarks on your device. It does not diagnose injury, guarantee safe technique, or replace a qualified coach.</p>
+        <label>WHAT SHOULD WE CALL YOU?<input value={name} maxLength={32} placeholder="Your first name" onChange={(event) => setName(event.target.value)} /></label>
+        <label>YOUR CURRENT FOCUS<select value={focus} onChange={(event) => setFocus(event.target.value as AthleteProfile["focus"])}><option value="both">Calisthenics + striking</option><option value="calisthenics">Calisthenics</option><option value="striking">Solo striking</option></select></label>
+        <div className="camera-notice" data-testid="camera-notice">
+          <span className="kicker">YOUR CAMERA</span>
+          <p>StanceLoop reads movement landmarks on your device. Camera frames are processed in-browser and never leave your machine — raw footage is never stored.</p>
+        </div>
+        <label className="consent-check"><input type="checkbox" checked={acceptedSafety} data-testid="onboarding-safety-checkbox" onChange={(event) => setAcceptedSafety(event.target.checked)} /><span>I understand that I should stop if I feel pain, dizziness, or unsafe, and that this is educational movement feedback.</span></label>
+        <button className="primary-button" disabled={!acceptedSafety} onClick={() => onComplete({ displayName: name.trim() || "Athlete", focus, onboardingComplete: true, acceptedSafetyNoticeAt: Date.now(), analyticsConsent: false, rawVideoRetention: "never" })}>Enter the loop <span>→</span></button>
+      </section>
+    </div>
+  );
 }
 
 function SettingsModal({ profile, preferences, roadmapLevel, onRoadmapLevelChange, onClose, onSave, onDataCleared }: { profile: AthleteProfile; preferences: Preferences; roadmapLevel: CalisthenicsLevel; onRoadmapLevelChange: (level: CalisthenicsLevel) => void; onClose: () => void; onSave: (profile: AthleteProfile, preferences: Preferences) => void; onDataCleared: () => void }) {
@@ -528,207 +540,19 @@ function App() {
     {view === "library" && <main className="page"><section className="library-head"><span className="kicker">LIVE DRILL LIBRARY</span><h1>One movement.<br /><em>One useful cue.</em></h1><p>Every drill has its own camera protocol, confidence checks and coaching rules. It will tell you when it cannot see enough to score fairly.</p></section><div className="library-filters" data-testid="library-filters"><label>TIME<select data-testid="filter-time" value={maxTime} onChange={(event) => setMaxTime(event.target.value)}><option value="all">Any time</option><option value="5">Up to 5 min</option><option value="10">Up to 10 min</option><option value="15">Up to 15 min</option></select></label><label>DIFFICULTY<select data-testid="filter-difficulty" value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option value="all">All levels</option><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></label><label>FOCUS<select data-testid="filter-focus" value={focus} onChange={(event) => setFocus(event.target.value)}><option value="all">All areas</option><option value="upper-body">Upper body</option><option value="full-body">Full body</option><option value="striking">Striking</option></select></label><label>YOUR LEVEL<select data-testid="level-select" value={level} onChange={(event) => setLevel(event.target.value as DrillLevel)}><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></label></div><p data-testid="library-count">{filterDrills({ ...(maxTime === "all" ? {} : { maxTimeMinutes: Number(maxTime) }), ...(difficulty === "all" ? {} : { difficulty: difficulty as DrillLevel }), ...(focus === "all" ? {} : { focus: focus as DrillFocus }) }).length} of {drills.length} drills</p><div className="drill-grid expanded" data-testid="drill-grid">{filterDrills({ ...(maxTime === "all" ? {} : { maxTimeMinutes: Number(maxTime) }), ...(difficulty === "all" ? {} : { difficulty: difficulty as DrillLevel }), ...(focus === "all" ? {} : { focus: focus as DrillFocus }) }).map((id) => <DrillCard key={id} drillId={id} isPro={isPro} onSelect={openDrill} targetLabel={sessionTargetLabel(id, level)} />)}</div><div className="how-card"><span>HOW LIVE COACHING WORKS</span><div><b>01</b><p>Frame shoulders-to-hips — full body for handstand</p><b>02</b><p>Let StanceLoop calibrate</p><b>03</b><p>Train. Listen. Improve.</p></div></div></main>}
 
     {view === "roadmap" && (
-      <main className="page library-page" data-testid="roadmap-page">
-        <section className="section-block">
-          <span className="kicker">PROGRESSIVE CALISTHENICS</span>
-          <h1>Build the pyramid.</h1>
-          <p>
-            Progress here is self-reported — camera coaching covers pushup, handstand and jab-cross.
-          </p>
-
-          {roadmapEffectiveLevel > roadmapConfig.currentLevel && (
-            <p data-testid="roadmap-auto-advanced">
-              Auto-advanced — {getLevelName(roadmapEffectiveLevel)} unlocked.
-            </p>
-          )}
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-              gap: 10,
-              margin: "16px 0",
-            }}
-          >
-            <div style={roadmapStatStyle}>ALL-TIME {getOverallProgressPercent(roadmapProgress)}%</div>
-            <div style={roadmapStatStyle}>SESSIONS {roadmapProgress.sessionsCompleted}</div>
-            <div style={roadmapStatStyle}>
-              STREAK {roadmapProgress.currentStreak} {roadmapProgress.currentStreak === 1 ? "day" : "days"}
-            </div>
-            <div style={roadmapStatStyle}>TOTAL {formatDuration(roadmapProgress.totalWorkoutMinutes)}</div>
-          </div>
-
-          <div
-            className="distance-bar"
-            data-testid="roadmap-progress-bar"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={getOverallProgressPercent(roadmapProgress)}
-          >
-            <i style={{ width: `${getOverallProgressPercent(roadmapProgress)}%` }} />
-          </div>
-
-          {roadmapSession ? (
-            <div style={{ marginTop: 18 }} data-testid="roadmap-session">
-              <span className="kicker">{roadmapConfig.mode.toUpperCase()}</span>
-              <h2>{roadmapSession.name}</h2>
-              <p>{roadmapSession.description}</p>
-
-              {roadmapSession.warmup.length > 0 && (
-                <div className="workout-steps">
-                  <span>Warmup</span>
-                  {roadmapSession.warmup.map((exercise) => (
-                    <span key={`warmup-${exercise.exerciseId}`}>
-                      {getExerciseById(exercise.exerciseId)?.name ?? exercise.exerciseId}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {roadmapSession.exercises.length > 0 && (
-                <div className="workout-steps" style={{ marginTop: 10 }}>
-                  {roadmapSession.exercises.map((exercise) => {
-                    const name = getExerciseById(exercise.exerciseId)?.name ?? exercise.exerciseId;
-                    const detail =
-                      exercise.targetReps !== undefined
-                        ? `${exercise.targetReps} reps`
-                        : exercise.targetHoldSeconds !== undefined
-                          ? `${exercise.targetHoldSeconds}s hold`
-                          : `${exercise.sets} sets`;
-                    return (
-                      <span key={`main-${exercise.exerciseId}`}>
-                        {name} · {detail}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-              {roadmapSession.cooldown.length > 0 && (
-                <div className="workout-steps" style={{ marginTop: 10 }}>
-                  <span>Cooldown</span>
-                  {roadmapSession.cooldown.map((exercise) => (
-                    <span key={`cooldown-${exercise.exerciseId}`}>
-                      {getExerciseById(exercise.exerciseId)?.name ?? exercise.exerciseId}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {roadmapSession.exercises.length === 0 && (
-                <p>Level complete — pick a new focus.</p>
-              )}
-
-              {roadmapConfirmArmed && (
-                <p data-testid="roadmap-confirm-note">
-                  This banks {roadmapSession.exercises.length}{" "}
-                  {roadmapSession.exercises.length === 1 ? "move" : "moves"}.
-                </p>
-              )}
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  marginTop: 14,
-                }}
-              >
-                <button className="subtle-button" onClick={regenerateRoadmapSession}>
-                  New session
-                </button>
-                <button
-                  className={roadmapConfirmArmed ? "primary" : "outline"}
-                  onClick={() => {
-                    if (roadmapConfirmArmed) {
-                      completeRoadmapSession();
-                    } else {
-                      setRoadmapConfirmArmed(true);
-                    }
-                  }}
-                  data-testid="roadmap-complete-session"
-                >
-                  {roadmapConfirmArmed ? "Confirm — everything above is done?" : "Complete session"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              className="primary"
-              onClick={() => setRoadmapSession(generateRoadmapSession(roadmapConfig, roadmapProgress))}
-              data-testid="roadmap-launcher"
-            >
-              Generate next session →
-            </button>
-          )}
-        </section>
-
-        <section className="section-block">
-          <div className="library-filters" style={{ gridTemplateColumns: "1fr", maxWidth: 420 }}>
-            <label>
-              PREFERRED LEVEL
-              <select
-                data-testid="roadmap-level-select"
-                value={roadmapConfig.currentLevel}
-                onChange={(event) => updateRoadmapLevel(Number(event.target.value) as CalisthenicsLevel)}
-              >
-                {ROADMAP_LEVELS.map((level) => (
-                  <option key={level} value={level}>
-                    Level {level + 1} · {getLevelName(level)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {nextRoadmapExercise ? (
-            <p data-testid="roadmap-next-up">
-              Next up: <b>{nextRoadmapExercise.name}</b> — {getLevelName(roadmapProgress.currentLevel)}.
-            </p>
-          ) : (
-            <p data-testid="roadmap-next-up">Pyramid complete — every level mastered.</p>
-          )}
-
-          {ROADMAP_LEVELS.map((level) => {
-            const stored = roadmapProgress.levelProgress[level];
-            const levelExercises = getExercisesByLevel(level);
-            const completed = stored?.completed ?? 0;
-            const total = stored?.total ?? levelExercises.length;
-            return (
-              <div key={level} className="section-block" style={{ marginTop: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <h3 style={{ marginTop: 0 }}>
-                    LEVEL {level + 1}
-                  </h3>
-                  <span className="kicker">
-                    {completed} / {total} mastered
-                  </span>
-                </div>
-                <p>{getLevelName(level)}</p>
-                <div className="workout-steps" style={{ flexWrap: "wrap", display: "flex", gap: 6, marginTop: 8 }}>
-                  {levelExercises.map((exercise) => {
-                    const done = roadmapProgress.completedExercises.has(exercise.id);
-                    const unlocked = isExerciseUnlocked(exercise.id, roadmapProgress.completedExercises);
-                    return (
-                      <span
-                        key={exercise.id}
-                        data-testid={`roadmap-exercise-${exercise.id}`}
-                        className={done ? "done" : unlocked ? "current" : undefined}
-                        style={unlocked ? undefined : { opacity: 0.45 }}
-                        title={unlocked ? undefined : "Locked — master the prerequisites first"}
-                      >
-                        {exercise.name}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </section>
-      </main>
+      <RoadmapView
+        config={roadmapConfig}
+        progress={roadmapProgress}
+        session={roadmapSession}
+        confirmArmed={roadmapConfirmArmed}
+        effectiveLevel={roadmapEffectiveLevel}
+        nextExercise={nextRoadmapExercise?.name ?? null}
+        onGenerate={() => setRoadmapSession(generateRoadmapSession(roadmapConfig, roadmapProgress))}
+        onUpdateLevel={updateRoadmapLevel}
+        onRegenerate={regenerateRoadmapSession}
+        onArmConfirm={() => setRoadmapConfirmArmed(true)}
+        onCompleteSession={completeRoadmapSession}
+      />
     )}
     {view === "duels" && <main className="page duels-page" data-testid="duels-page"><section className="duels-head"><div><span className="kicker">ASYNC, NOT ASYNCHRONOUS VIDEO</span><h1>Challenge the work.<br /><em>Not the Wi-Fi.</em></h1><p>Both athletes follow an identical drill protocol. Each score is derived locally and shared only when the athlete chooses.</p></div><div className="duel-rule"><span>01</span><p>Same drill<br /><b>Same protocol</b></p><span>02</span><p>Same target<br /><b>Same window</b></p></div></section>{incoming && <section className="incoming-challenge"><div><span>INCOMING CHALLENGE</span><h2>{incoming.title}</h2><p>{incoming.challenger} challenged you to a {drillById(incoming.drillId).title.toLowerCase()} duel.</p></div><button className="primary-button" data-testid="duel-accept" onClick={() => acceptDuel(incoming)}>Accept and train <span>→</span></button><button className="subtle-button" data-testid="duel-decline" onClick={() => declineDuel(incoming)}>Decline</button></section>}
       <section className="duel-builder"><header><span className="kicker">CREATE A GHOST DUEL</span><h2>Set the line.</h2></header><div className="builder-controls"><label>DRILL<select value={challengeDrill} onChange={(event) => setChallengeDrill(event.target.value as DrillId)}>{drills.map((drill) => <option key={drill.id} value={drill.id}>{drill.title}{drill.pro ? " · Pro" : ""}</option>)}</select></label><label>TARGET<select value={challengeTarget} onChange={(event) => { const target = event.target.value as Challenge["target"]; setChallengeTarget(target); setChallengeGoal(target === "hold" ? 30 : target === "score" ? 85 : 10); }}><option value="reps">Verified reps</option><option value="hold">Stable hold</option><option value="score">Form score</option></select></label><label>TO BEAT<input min="1" type="number" value={challengeGoal} onChange={(event) => setChallengeGoal(Number(event.target.value))} /></label><button className="primary-button" data-testid="duel-create" onClick={createChallenge}>{copied ? "Link copied" : "Create link"}<span>{copied ? "✓" : "→"}</span></button></div>{duelNotice && <p className="duel-notice" data-testid="duel-notice">{duelNotice}</p>}<p className="duels-privacy" data-testid="duels-privacy">Private by default — duels move by invite link only. Nothing is listed publicly.</p></section>
@@ -739,6 +563,7 @@ function App() {
 
     {selectedSession && <SessionModal session={selectedSession} onClose={() => { setSelectedSession(null); setLastFinishedId(null); }} onTrain={openDrill} speakRecap={selectedSession.id === lastFinishedId} />}
 
+    {profile.acceptedTermsVersion !== TERMS_VERSION && <TermsModal onAccept={(version) => { const nextProfile = { ...profile, acceptedTermsVersion: version, acceptedTermsAt: Date.now() }; saveProfile(nextProfile); setProfile(nextProfile); }} />}
     {!profile.onboardingComplete && <Onboarding onComplete={(nextProfile) => { saveProfile(nextProfile); setProfile(nextProfile); }} />}
     {settingsOpen && <SettingsModal profile={profile} preferences={preferences}
         roadmapLevel={roadmapConfig.currentLevel}

@@ -2,13 +2,14 @@ import { test, expect } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
+import { TERMS_VERSION } from "../src/terms";
 
 const artifactsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "artifacts");
 fs.mkdirSync(artifactsDir, { recursive: true });
 
 const HOUR = 1000 * 60 * 60;
 
-function baseSeed(overrides: { pro?: boolean; sessions?: unknown[] } = {}) {
+function baseSeed(overrides: { pro?: boolean; sessions?: unknown[]; profile?: Record<string, unknown> } = {}) {
   const sessions = overrides.sessions ?? [
     {
       id: "s-invalid-1",
@@ -59,22 +60,25 @@ function baseSeed(overrides: { pro?: boolean; sessions?: unknown[] } = {}) {
   ];
   const pro = overrides.pro ?? true;
   return async (page: { addInitScript: (fn: (...args: unknown[]) => unknown, arg?: unknown) => Promise<void> }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem(
-        "stanceloop.profile",
-        JSON.stringify({
+    await page.addInitScript(
+      (args: { profile: Record<string, unknown>; preferences: Record<string, unknown> }) => {
+        localStorage.setItem("stanceloop.profile", JSON.stringify(args.profile));
+        localStorage.setItem("stanceloop.preferences", JSON.stringify(args.preferences));
+      },
+      {
+        profile: {
           displayName: "Lalith",
           focus: "both",
           onboardingComplete: true,
           analyticsConsent: false,
           rawVideoRetention: "never",
-        }),
-      );
-      localStorage.setItem(
-        "stanceloop.preferences",
-        JSON.stringify({ coachVoice: "direct", haptics: true, mirroredCamera: true, units: "metric" }),
-      );
-    });
+          acceptedTermsVersion: TERMS_VERSION,
+          acceptedTermsAt: Date.now(),
+          ...(overrides.profile ?? {}),
+        },
+        preferences: { coachVoice: "direct", haptics: true, mirroredCamera: true, units: "metric" },
+      },
+    );
     await page.addInitScript(
       (args: { pro: boolean; sessions: unknown[] }) => {
         localStorage.setItem("stanceloop.pro", JSON.stringify(args.pro));
@@ -405,4 +409,39 @@ test("roadmap: 75-exercise tree renders, a session banks progress, and level per
     .toBe(2);
   await expect(page.getByTestId("roadmap-session")).toBeVisible();
   await page.screenshot({ path: path.join(artifactsDir, "07-roadmap.png") });
+});
+
+test("first-run consent gate blocks onboarding until terms are accepted", async ({ page }) => {
+  const seed = baseSeed({
+    pro: true,
+    profile: { onboardingComplete: false, acceptedTermsVersion: undefined },
+  });
+  await seed(page);
+  await page.goto("/");
+
+  await expect(page.getByTestId("terms-modal")).toBeVisible();
+  await expect(page.getByTestId("terms-modal")).toContainText("Terms & Conditions");
+  await expect(page.getByTestId("terms-accept-button")).toBeDisabled();
+  await expect(page.getByTestId("onboarding-modal")).toBeAttached();
+
+  // The consent backdrop (z-index 30) covers the onboarding backdrop (z-index 20),
+  // so onboarding controls cannot receive pointer events until consent is given.
+  await expect
+    .poll(() =>
+      page.getByTestId("onboarding-modal").evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return false;
+        const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        return top !== null && top.closest(".terms-backdrop") !== null;
+      }),
+    )
+    .toBe(true);
+  await page.screenshot({ path: path.join(artifactsDir, "08-terms-gate.png") });
+
+  await page.getByTestId("terms-checkbox").check();
+  await expect(page.getByTestId("terms-accept-button")).toBeEnabled();
+  await page.getByTestId("terms-accept-button").click();
+  await expect(page.getByTestId("terms-modal")).toHaveCount(0);
+  await expect(page.getByTestId("onboarding-modal")).toBeVisible();
+  await page.screenshot({ path: path.join(artifactsDir, "09-onboarding.png") });
 });

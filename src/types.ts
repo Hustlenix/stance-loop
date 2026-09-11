@@ -184,6 +184,10 @@ export type AthleteProfile = {
   acceptedSafetyNoticeAt?: number;
   analyticsConsent: boolean;
   rawVideoRetention: "never" | "ask";
+  /** Version stamp of the Terms & Conditions the athlete has consented to. */
+  acceptedTermsVersion?: string;
+  /** Epoch millis when the athlete accepted the current terms. */
+  acceptedTermsAt?: number;
 };
 
 /** Audio-script verbosity for rep/hold announcements (Task B, persisted). */

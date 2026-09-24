@@ -496,3 +496,49 @@ em { color: #d8ff65; font-style: normal; }
 @media (prefers-reduced-motion: reduce) {
   .demo-progress i, .companion-orb, .ar-companion, .demo-companion { transition: none !important; animation: none !important; }
 }
+
+
+/* Rigged companion: phase-driven exercise demonstration, not a static mascot. */
+.companion-avatar {
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  overflow: visible;
+  color: #d8ff65;
+}
+.companion-avatar .avatar-body line {
+  stroke-width: 4.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.companion-avatar .avatar-head {
+  fill: rgba(7,12,15,.98);
+  stroke: currentColor;
+  stroke-width: 3.2;
+}
+.companion-avatar .avatar-joint { fill: currentColor; }
+.avatar-state-correcting,
+.avatar-state-tracking-lost { color: #ffb18b; }
+.avatar-state-celebrating-rep { color: #f7ffe9; }
+.companion-tracking-lost .companion-avatar { opacity: .68; transform: rotate(7deg); }
+.companion-correcting .companion-avatar { transform: translateX(-2px); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .avatar-state-training .avatar-body,
+  .avatar-state-demonstrating .avatar-body {
+    animation: companion-rig-breathe 1.15s ease-in-out infinite alternate;
+    transform-origin: 40px 40px;
+  }
+  .avatar-state-celebrating-rep {
+    animation: companion-rig-celebrate .7s cubic-bezier(.2,.8,.2,1);
+    transform-origin: 40px 60px;
+  }
+  @keyframes companion-rig-breathe {
+    from { transform: translateY(0); }
+    to { transform: translateY(-1.5px); }
+  }
+  @keyframes companion-rig-celebrate {
+    0%,100% { transform: translateY(0) rotate(0); }
+    45% { transform: translateY(-7px) rotate(-5deg) scale(1.08); }
+  }
+}

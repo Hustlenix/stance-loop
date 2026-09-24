@@ -542,3 +542,12 @@ em { color: #d8ff65; font-style: normal; }
     45% { transform: translateY(-7px) rotate(-5deg) scale(1.08); }
   }
 }
+
+
+.companion-minimal .companion-avatar,
+.companion-minimal .avatar-body {
+  animation: none !important;
+  transform: none !important;
+}
+.ghost-import { display: inline-flex; align-items: center; cursor: pointer; }
+.ghost-import input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }

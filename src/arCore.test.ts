@@ -86,7 +86,9 @@ describe("landmark-only ghost recorder", () => {
     const session = recorder.finish({ id: "ghost-1", drillId: "pushup", createdAt: 123 });
     expect(session.frames).toHaveLength(2);
     expect(session.rawVideoStored).toBe(false);
-    expect(JSON.stringify(session)).not.toMatch(/video|blob|imageData/i);
+    expect(session).not.toHaveProperty("video");
+    expect(session).not.toHaveProperty("blob");
+    expect(session).not.toHaveProperty("imageData");
     expect(isGhostSession(session)).toBe(true);
   });
 

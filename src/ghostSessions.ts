@@ -140,7 +140,7 @@ export function migrateGhostSession(value: unknown): GhostSession | undefined {
     createdAt: typeof legacy.createdAt === "number" ? legacy.createdAt : Date.now(),
     durationMs: typeof legacy.durationMs === "number"
       ? legacy.durationMs
-      : (legacy.frames.at(-1) as GhostPoseFrame | undefined)?.t ?? 0,
+      : (legacy.frames[legacy.frames.length - 1] as GhostPoseFrame | undefined)?.t ?? 0,
   } as GhostSession;
   return isGhostSession(migrated) ? migrated : undefined;
 }

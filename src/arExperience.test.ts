@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { demoCompanionAt, demoGhostSession } from "./demoSession";
-import { compareGhostTempo, ghostCompatibility, ghostFrameAt, isGhostSession } from "./ghostSessions";
+import { compareGhostTempo, ghostCompatibility, ghostFrameAt, isGhostSession, migrateGhostSession } from "./ghostSessions";
 
 describe("AR experience contract", () => {
   it("ships a deterministic camera-free demo fixture with no video", () => {
@@ -30,6 +30,17 @@ describe("AR experience contract", () => {
     const afterRep = compareGhostTempo({ liveRep: 1, liveElapsedMs: 5600, ghost: demoGhostSession });
     expect(afterRep.ghostRep).toBe(1);
     expect(afterRep.timeDeltaMs).toBe(600);
+  });
+
+  it("migrates safe landmark-only v0 recordings and rejects media-shaped legacy data", () => {
+    const legacy = { ...demoGhostSession, version: 0 };
+    delete (legacy as { rawVideoStored?: boolean }).rawVideoStored;
+    const migrated = migrateGhostSession(legacy);
+    expect(migrated?.version).toBe(1);
+    expect(migrated?.rawVideoStored).toBe(false);
+
+    const unsafe = { ...legacy, video: "data:video/mp4;base64,AAAA" };
+    expect(migrateGhostSession(unsafe)).toBeUndefined();
   });
 
   it("keeps replay interpolation within recorded bounds", () => {

@@ -123,6 +123,28 @@ export function isGhostSession(value: unknown): value is GhostSession {
   );
 }
 
+export function migrateGhostSession(value: unknown): GhostSession | undefined {
+  if (isGhostSession(value)) return value;
+  if (!value || typeof value !== "object") return undefined;
+  const legacy = value as Partial<GhostSession> & { version?: number };
+  // Safe v0 migration: only landmark-shaped records are accepted. Anything
+  // carrying media payload-like fields is rejected rather than normalized.
+  if (legacy.version !== 0 || !legacy.id || !legacy.drillId || !Array.isArray(legacy.frames)) return undefined;
+  const unsafe = value as Record<string, unknown>;
+  if ("video" in unsafe || "blob" in unsafe || "imageData" in unsafe || "framesBase64" in unsafe) return undefined;
+  const migrated = {
+    ...legacy,
+    version: GHOST_SESSION_VERSION,
+    rawVideoStored: false,
+    frameIntervalMs: typeof legacy.frameIntervalMs === "number" ? legacy.frameIntervalMs : DEFAULT_RECORD_INTERVAL_MS,
+    createdAt: typeof legacy.createdAt === "number" ? legacy.createdAt : Date.now(),
+    durationMs: typeof legacy.durationMs === "number"
+      ? legacy.durationMs
+      : (legacy.frames.at(-1) as GhostPoseFrame | undefined)?.t ?? 0,
+  } as GhostSession;
+  return isGhostSession(migrated) ? migrated : undefined;
+}
+
 function interpolatePoint(a: Point, b: Point, ratio: number): Point {
   return {
     x: a.x + (b.x - a.x) * ratio,
@@ -209,7 +231,11 @@ export function loadGhostSession(id: string): GhostSession | undefined {
   if (!raw) return undefined;
   try {
     const parsed: unknown = JSON.parse(raw);
-    return isGhostSession(parsed) ? parsed : undefined;
+    const migrated = migrateGhostSession(parsed);
+    if (migrated && (parsed as { version?: number }).version !== GHOST_SESSION_VERSION) {
+      saveGhostSession(migrated);
+    }
+    return migrated;
   } catch {
     return undefined;
   }
@@ -253,6 +279,28 @@ export function clearGhostSessions(): void {
     if (key?.startsWith(GHOST_STORAGE_PREFIX)) keys.push(key);
   }
   keys.forEach((key) => window.localStorage.removeItem(key));
+}
+
+export function importGhostExport(value: unknown): { imported: number; rejected: number } {
+  if (!value || typeof value !== "object") return { imported: 0, rejected: 1 };
+  const payload = value as { recordings?: unknown[]; recording?: unknown };
+  const candidates = Array.isArray(payload.recordings)
+    ? payload.recordings
+    : payload.recording
+      ? [payload.recording]
+      : [];
+  let imported = 0;
+  let rejected = 0;
+  for (const candidate of candidates) {
+    const session = migrateGhostSession(candidate);
+    if (!session) {
+      rejected++;
+      continue;
+    }
+    saveGhostSession(session);
+    imported++;
+  }
+  return { imported, rejected };
 }
 
 export function buildGhostExport(): {

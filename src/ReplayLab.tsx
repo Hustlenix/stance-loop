@@ -10,6 +10,31 @@ import {
 } from "./ghostSessions";
 import { drillById } from "./data";
 
+function angle2d(a?: { x: number; y: number }, b?: { x: number; y: number }, c?: { x: number; y: number }) {
+  if (!a || !b || !c) return undefined;
+  const ab = { x: a.x - b.x, y: a.y - b.y };
+  const cb = { x: c.x - b.x, y: c.y - b.y };
+  const denom = Math.hypot(ab.x, ab.y) * Math.hypot(cb.x, cb.y);
+  if (!denom) return undefined;
+  const cosine = Math.max(-1, Math.min(1, (ab.x * cb.x + ab.y * cb.y) / denom));
+  return Math.round((Math.acos(cosine) * 180) / Math.PI);
+}
+
+function replayAngleLabel(session: GhostSession, frame: ReturnType<typeof ghostFrameAt>) {
+  if (!frame) return "—";
+  const p = frame.landmarks;
+  if (session.drillId === "handstand") {
+    const angle = angle2d(p[11], p[23], p[27]) ?? angle2d(p[12], p[24], p[28]);
+    return angle === undefined ? "—" : `${angle}° body line (2D)`;
+  }
+  const leftVisibility = (p[13]?.visibility ?? 0) + (p[15]?.visibility ?? 0);
+  const rightVisibility = (p[14]?.visibility ?? 0) + (p[16]?.visibility ?? 0);
+  const angle = leftVisibility >= rightVisibility
+    ? angle2d(p[11], p[13], p[15])
+    : angle2d(p[12], p[14], p[16]);
+  return angle === undefined ? "—" : `${angle}° elbow (2D)`;
+}
+
 function timeLabel(ms: number) {
   const total = Math.max(0, Math.round(ms / 1000));
   return `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
@@ -114,6 +139,7 @@ export default function ReplayLab({ sessionId, onClose, onTrainAgainstPast }: Pr
         <div><span>STATE</span><strong>{frame?.phase ?? "—"}</strong></div>
         <div><span>REP</span><strong>{frame?.rep ?? 0}</strong></div>
         <div><span>CONFIDENCE</span><strong>{frame ? `${Math.round(frame.confidence * 100)}%` : "—"}</strong></div>
+        <div><span>2D JOINT METRIC</span><strong>{replayAngleLabel(session, frame)}</strong></div>
         <div><span>FORM EVENT</span><strong>{frame?.violations?.[0] ?? "None in sampled frame"}</strong></div>
       </div>
 

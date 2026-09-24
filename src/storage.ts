@@ -375,4 +375,16 @@ export function clearAllLocalData() {
       // Storage unavailable — clearing is a no-op so the UI can still reset.
     }
   }
+  // Landmark-only AR replays use dynamic per-session keys, so deleting all
+  // local StanceLoop data must include them as well.
+  try {
+    const ghostKeys: string[] = [];
+    for (let index = 0; index < window.localStorage.length; index++) {
+      const key = window.localStorage.key(index);
+      if (key?.startsWith("stanceloop:ghost:")) ghostKeys.push(key);
+    }
+    ghostKeys.forEach((key) => window.localStorage.removeItem(key));
+  } catch {
+    // Same no-op behavior as the fixed-key cleanup above.
+  }
 }

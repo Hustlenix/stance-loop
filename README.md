@@ -1,98 +1,347 @@
-<!-- DRAFT — review before publishing -->
-
 # StanceLoop
 
-**StanceLoop** is a live, browser-based coach that watches you train — push-ups, handstand holds, or jab-cross shadowboxing — through your webcam and gives you real-time form feedback, rep counts, hold times, and spoken cues. No account, no uploads, no backend: everything happens on your device, and your data stays there.
+## Your private AR training partner
 
-## Project Story
+**StanceLoop watches your movement locally, trains beside you, visualizes form corrections in real time, and reconstructs previous workouts from pose landmarks so you can train against your past self — without saving your video.**
 
-[PLACEHOLDER — one short paragraph on why you started building StanceLoop: what training problem you wanted to solve, and what a typical session should feel like. Keep it personal and specific — a sentence or two about your own training or the moment the idea clicked.]
+Live: https://hustlenix.github.io/stance-loop/
 
-The short version: this started as a question about whether a webcam plus an on-device pose model could feel like honest coaching rather than a gimmick. It grew into a rule engine that counts reps, times holds, tracks strikes, and tells you when it cannot see you well enough to score — instead of pretending it can.
-
----
-
-# About the project
-
-## Inspiration
-
-[PLACEHOLDER — what inspired the project. If it was your own training, an observation about how people train at home, or a frustration with existing fitness tech, name it. Do not invent specifics; just fill in what is true.]
-
-The core instinct was: most at-home fitness tech either needs expensive equipment or sends your camera feed somewhere you cannot verify. A modern browser on a normal laptop has enough compute to run pose tracking locally, frame by frame. StanceLoop exists to prove that honest, private, real-time form feedback can run entirely on-device — and to make training feel less like a mystery and more like a set of clear rules you can follow and beat.
-
-## What it does
-
-Pick a drill: push-ups, handstand holds, or jab-cross shadowboxing. Grant the camera access. StanceLoop tracks your body in real time and coaches the set:
-
-- Push-ups: detects and counts reps as you complete them.
-- Handstand holds: times the hold and watches your line.
-- Jab-cross: tracks extension-and-return for each strike.
-- Spoken cues during the set, vibration feedback where the device supports it, and a skeleton overlay showing what it is watching.
-- Calibration and tracking-loss states: if the camera cannot see the required setup, the app says so instead of inventing a score.
-- Post-set recap with score components and shareable recap cards.
-
-Everything is processed in the browser. Camera frames are never uploaded or persisted; raw video retention defaults to "never"; analytics consent is off by default; and there is no backend server at all. Your sessions live in browser localStorage (a dozen `stanceloop.*` keys), and they stay on your device unless you choose to share a recap card or send a duel link.
-
-Async "ghost duels" work by sharing a link that carries only the drill, target, and camera protocol — no results are stored anywhere. Both athletes answer the same protocol on their own time.
-
-There is also an optional on-device AI coach that can talk to your own local model server (for example Ollama at `http://localhost:11434`). It is off by default and opt-in from settings.
-
-## How we built it
-
-- React 19 + TypeScript, bundled with Vite 6, deployed from GitHub Actions to GitHub Pages with a relative base path.
-- Computer vision via MediaPipe Pose Landmarker (`@mediapipe/tasks-vision`), running in the browser with on-device landmark smoothing, confidence gating, rule-based state machines, and cue cooldowns so feedback stays stable.
-- Unit tests with Vitest and end-to-end tests with Playwright, both run in CI.
-- Inside the app: full Terms & Conditions and privacy disclosures with a versioned consent gate (users must re-accept when the terms change) and a redesigned onboarding flow.
-
-Verified before shipping this version: the production build passes, 340 unit tests pass across 15 test files, 11 Playwright e2e tests pass, and the live site was checked in a real browser with zero console errors.
-
-## Challenges we ran into
-
-1. **Blank page after first deploy.** The site rendered nothing because asset paths were absolute and pointed away from the Pages subpath. Fixed by configuring a relative base path in Vite.
-2. **GitHub Actions churn.** Node 20 deprecation warnings forced upgrades of the checkout, upload-pages, and deploy-pages actions to v5 — a reminder that pipeline maintenance is part of the product.
-3. **Keeping e2e tests green through a first-run rewrite.** Redesigning onboarding and adding the legal consent gate meant the existing browser tests had to keep passing while the flow they exercised changed under them.
-4. **Honesty under pressure.** Writing the Terms & Privacy copy to match exactly what the code actually does — no uploads, no accounts — so every claim is verifiable rather than boilerplate.
-5. **Feedback latency vs. sensor noise.** Live form feedback has to feel instant while ignoring jitter from pose landmarks. The fix was a combination of smoothing, confidence gating, and cue cooldowns rather than any single trick.
-
-## Accomplishments that we're proud of
-
-- A coached set that never uploads a camera frame, with a data flow that backs that claim up.
-- Detection rules that prefer honesty: when the camera protocol is not met, the app refuses to score rather than faking a result.
-- A full legal consent flow (with placeholders for the lawyer review) built into the app itself, not bolted on later.
-- A test suite that keeps the whole thing honest: 340 unit tests and 11 end-to-end tests, all green in CI.
-
-## What we learned
-
-Training feedback is only as good as its honesty rules. The same pose model can overcount, undercount, or confidently lie — the real engineering is in the state machines, confidence thresholds, and knowing when to say "I cannot see that."
-
-The other big lesson was scope: a browser app with a camera can do a surprising amount with no backend at all, and privacy is not a bolt-on. When the product is private by construction, the Terms page writes itself from the code.
-
-## What's next for StanceLoop
-
-- **Lawyer-reviewed Terms & Conditions** with hosted terms and privacy pages. The current in-app copy is a draft with placeholders for company name, registered address, governing-law jurisdiction, and support email.
-- **Real accounts and a backend** (for example Supabase) for stored duel results and cross-user challenges. Today duels are share-by-link only.
-- **RevenueCat** entitlements with a real paywall, replacing the local Pro entitlement demo.
-- **Coach validation** of rule thresholds with qualified calisthenics and striking coaches across body types, camera angles, and lighting.
-- **A native iOS follow-up** packaging the same rule engine in Swift with Apple Vision.
+Source: https://github.com/Hustlenix/stance-loop
 
 ---
 
-## Try it out
+## The memorable thing
 
-- Live app: https://hustlenix.github.io/stance-loop/
-- Source code: https://github.com/Hustlenix/stance-loop
-- Run locally:
-  - `npm install`
-  - `npm run dev`
-  - Open `http://127.0.0.1:5173`, choose "Start a live set", and grant camera access when ready.
+### 👻 Train Against Past You
 
-## Honest limits
+A completed StanceLoop workout can be reconstructed later without recording camera video.
 
-- The app never uploads camera frames — but it also cannot work without your camera, and all three drills require their stated camera setup (side view or front-45 view, full body where required). When tracking is lost, it reports that rather than scoring.
-- Cues are educational training feedback, not medical advice, injury-prevention claims, or performance guarantees. Stop if something feels wrong.
-- The Pro entitlement is a local demo switch; real purchases come with the RevenueCat integration on the roadmap.
+During a set, StanceLoop samples processed pose landmarks at a controlled interval and stores only compact movement data:
 
-## Planning docs
+```text
+timestamp
+landmarks: x / y / optional z / visibility
+exercise phase
+rep number
+tracking confidence
+form violations
+```
 
+The camera frame itself is processed live and discarded.
+
+When **Train Against Past You** starts, the saved landmark timeline is interpolated and rendered as a translucent skeleton inside the live camera experience. A three-second countdown synchronizes the new set with the old timeline. The app can show overlay, side-by-side, or tempo-race views and compares only defensible metrics such as reps and recorded timing.
+
+If camera placement changes, StanceLoop says that overlay alignment is approximate rather than pretending the geometry is scientifically exact.
+
+---
+
+## Try AR Demo
+
+Reviewers do not need to get on the floor, allow camera access, or perform a push-up to understand the project.
+
+The home screen includes **Try AR Demo**, a deterministic camera-free sequence built from landmark fixtures rather than human video. It demonstrates:
+
+1. the reconstructed pose,
+2. the event-driven companion,
+3. a movement-state transition,
+4. a form error,
+5. a visual correction,
+6. a verified rep,
+7. a Past-You ghost,
+8. the landmark-only privacy model.
+
+The demo uses the same replay and companion concepts as the live experience.
+
+---
+
+## How the system works
+
+```text
+Camera
+  ↓
+MediaPipe Pose Landmarker
+  ↓
+Pose smoothing + confidence / framing gates
+  ↓
+Deterministic exercise state machine
+  ├──────────────→ Workout event stream
+  │                    ↓
+  │              Companion engine
+  │                    ↓
+  ├──────────────→ AR overlays / cues / form guides
+  │
+  └──────────────→ Landmark recorder
+                       ↓
+                  Local ghost session
+                       ↓
+              Replay Lab / Past-You race
+```
+
+The CV pipeline does not know how the companion is drawn. The companion does not decide whether a rep counts. Recording does not store pixels. Those boundaries are intentional.
+
+### Workout events
+
+The existing pose engine is adapted into a small event stream including events such as:
+
+- workout started,
+- rep started,
+- rep verified,
+- form error,
+- tracking lost,
+- tracking recovered,
+- phase changed.
+
+The deterministic companion behavior reducer consumes those events and changes between states such as training, correcting, celebrating a rep, tracking-lost, and finished.
+
+This keeps presentation logic out of the computer-vision rules.
+
+---
+
+## Live AR coaching
+
+The camera remains the hero surface. StanceLoop layers useful information onto it instead of turning the workout into a dashboard.
+
+The live view can include:
+
+- current user skeleton,
+- landmark-derived form guides,
+- the Past-You ghost,
+- rep / phase / form HUD,
+- one prioritized correction,
+- event-driven companion,
+- race timing,
+- tracking confidence.
+
+### Form visualization
+
+The guides are derived from the same pose landmarks used by the detector:
+
+- **Push-up:** shoulder-to-ankle body line and hip-region emphasis when hip-related form feedback is active.
+- **Handstand:** a visual alignment corridor based on the tracked shoulder position.
+- **Jab-cross:** wrist trajectory extended from the tracked shoulder/wrist geometry toward a visual target.
+
+They are coaching visualizations, not medical measurements.
+
+---
+
+## Replay Lab
+
+Every new landmark-enabled session can be opened in **Replay Lab**.
+
+Replay Lab supports:
+
+- play / pause,
+- timeline scrubbing,
+- 0.5× / 1× / 1.5× / 2× playback,
+- reconstructed skeleton animation,
+- phase inspection,
+- rep inspection,
+- confidence display,
+- sampled form-error display,
+- jumping to rep/error moments,
+- overlay comparison against another recording of the same drill,
+- exporting an individual landmark recording,
+- deleting an individual landmark recording,
+- opening Train Against Past You.
+
+A data inspector shows the exact class of information being stored.
+
+---
+
+## Privacy is an engineering property
+
+### Camera path
+
+```text
+camera pixels
+  ↓
+MediaPipe inference in the browser
+  ↓
+pose landmarks
+  ↓
+camera pixels discarded
+```
+
+### Saved AR replay
+
+```text
+NO RAW VIDEO
+
+stored locally:
+- sampled pose landmarks
+- timestamps
+- exercise phase
+- rep index
+- confidence
+- form violations
+```
+
+Ghost recordings explicitly carry:
+
+```ts
+rawVideoStored: false
+```
+
+Settings expose the number of stored landmark recordings, sampled frames, approximate storage size, export controls, replay-only deletion, and full local-data deletion.
+
+The core workout experience requires no account, cloud AI, subscription, or external backend.
+
+The optional Ollama coaching integration remains optional and is not responsible for rep detection or form-state decisions.
+
+---
+
+## Motion Debug View
+
+Technical reviewers can enable **Motion Debug View** during a live session.
+
+It exposes values the system can actually measure:
+
+- render/inference loop FPS,
+- Pose Landmarker inference time,
+- tracking confidence,
+- current exercise phase,
+- current rep count,
+- landmark recording buffer size.
+
+The debug surface is intentionally separate from the normal athlete experience.
+
+---
+
+## Supported drills
+
+StanceLoop focuses on depth rather than exercise count:
+
+- Push-up
+- Handstand hold
+- Jab-cross shadowboxing
+
+Each keeps its own camera protocol, confidence gates, deterministic state transitions, scoring rules, and form feedback.
+
+---
+
+## Honest failure behavior
+
+StanceLoop is designed to say **“I cannot score this fairly”** instead of manufacturing certainty.
+
+Examples include:
+
+- insufficient confidence,
+- required body region not visible,
+- suspected multiple people,
+- unsuitable camera view,
+- tracking interruption,
+- incomplete evidence.
+
+Declined frames are not silently converted into good scores.
+
+---
+
+## Performance strategy
+
+The live loop separates concerns rather than routing every pose frame through React state.
+
+Techniques used include:
+
+- `requestAnimationFrame`,
+- refs for frame-rate state,
+- throttled React UI updates,
+- sampled landmark recording rather than every camera frame,
+- replay interpolation,
+- local persistence only after recording,
+- lightweight Canvas/SVG/CSS rendering,
+- no heavyweight mandatory WebXR/3D runtime.
+
+The debug view exposes real runtime measurements instead of README benchmark claims made on one machine.
+
+---
+
+## Testing
+
+The repository includes:
+
+- Vitest unit tests for pose rules, state machines, cue arbitration, storage/integrity systems, the workout event stream, companion behavior, landmark recording, replay interpolation, demo fixtures, ghost compatibility, and tempo comparison.
+- Playwright end-to-end tests for the browser product.
+- GitHub Actions CI that verifies unit tests and a strict TypeScript + production Vite build on pull requests and feature branches.
+- GitHub Pages deployment from `main`.
+
+The AR subsystem is intentionally composed of pure TypeScript modules wherever practical so it can be tested without webcam access.
+
+---
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the Vite URL, normally:
+
+```text
+http://127.0.0.1:5173
+```
+
+Verification:
+
+```bash
+npm run test:unit
+npm run build
+npx playwright test
+```
+
+---
+
+## Project story
+
+StanceLoop started with a smaller question: **can a browser coach a workout without uploading the camera feed?**
+
+The first versions proved the deterministic movement side: MediaPipe landmarks could feed exercise-specific state machines, confidence gates, rep counters, hold timers, cue arbitration, and honest decline states.
+
+But the skeleton overlay still felt like looking at diagnostics.
+
+The AR transformation turns that same pipeline into a training partner. Movement-state transitions now emit domain events. Those events drive a companion. Form mistakes become visual overlays. And the processed landmark stream can be sampled, persisted, interpolated, and reconstructed later.
+
+That led to the strangest feature in the project:
+
+> You can race a reconstructed version of your previous workout even though StanceLoop never recorded a video of that workout.
+
+That is the core of the project.
+
+---
+
+## Limitations
+
+StanceLoop is deliberately explicit about what it cannot guarantee.
+
+- It is **educational fitness feedback**, not medical advice, diagnosis, injury prevention, or a substitute for a qualified coach.
+- Landmark accuracy depends on lighting, camera placement, visibility, clothing/occlusion, device performance, and MediaPipe tracking quality.
+- A Past-You overlay is a reconstruction in normalized camera coordinates. Different camera positions can make alignment approximate.
+- The app does not infer biomechanical forces, joint loading, pain, injury risk, or medical safety.
+- The three supported drills are intentionally deeper than a large shallow exercise catalog.
+- Browser storage can be cleared by the user or browser.
+- Optional local-model coaching can fail independently; deterministic movement detection continues without it.
+
+---
+
+## Tech
+
+- React 19
+- TypeScript
+- Vite
+- MediaPipe Pose Landmarker
+- Canvas / SVG / CSS AR-style overlays
+- localStorage for local-first data
+- Vitest
+- Playwright
+- GitHub Actions
+- GitHub Pages
+
+No mandatory WebXR. No mandatory backend. No raw-video persistence.
+
+---
+
+## Architecture / development notes
+
+- [AR architecture and privacy model](docs/AR_ARCHITECTURE.md)
+- [AR transformation devlog](docs/AR_TRANSFORMATION_DEVLOG.md)
 - [MVP product brief](docs/STANCELOOP_MVP.md)
-- [SaaS plan and product audit](docs/STANCELOOP_SAAS_PLAN.md)

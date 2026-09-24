@@ -5,6 +5,10 @@ import { drillById } from "./data";
 import { effectiveFarMode, farStatusLabel, farWashClassName, farWashFor } from "./farMode";
 import { sessionTargetLabel } from "./library";
 import { PoseCoach, poseConnections } from "./poseEngine";
+import { initialCompanionModel, reduceCompanion, type CompanionModel } from "./companionEngine";
+import CompanionAvatar from "./CompanionAvatar";
+import { GhostRecorder, compareGhostTempo, ghostFrameAt, loadGhostSession, saveGhostSession, type GhostSession } from "./ghostSessions";
+import { deriveWorkoutEvents, initialWorkoutEventCursor, type WorkoutFrameSnapshot } from "./workoutEvents";
 import {
   CALIBRATION_CONFIDENCE,
   CALIBRATION_HOLD_MS,
@@ -137,8 +141,98 @@ function drawPose(canvas: HTMLCanvasElement, video: HTMLVideoElement, landmarks?
   }
 }
 
+type GhostMode = "overlay" | "side-by-side" | "tempo";
+
+function drawGhostPose(canvas: HTMLCanvasElement, landmarks: Point[] | undefined, mode: GhostMode) {
+  if (!landmarks?.length) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const mapX = (point: Point) => (mode === "side-by-side" ? 0.5 + point.x * 0.46 : point.x) * canvas.width;
+  ctx.save();
+  ctx.globalAlpha = 0.58;
+  ctx.lineWidth = Math.max(3, canvas.width / 260);
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "rgba(83, 218, 255, .9)";
+  ctx.fillStyle = "rgba(168, 239, 255, .9)";
+  ctx.setLineDash([10, 7]);
+  for (const [start, end] of poseConnections) {
+    const a = landmarks[start];
+    const b = landmarks[end];
+    if (!a || !b || (a.visibility ?? 0) < .25 || (b.visibility ?? 0) < .25) continue;
+    ctx.beginPath();
+    ctx.moveTo(mapX(a), a.y * canvas.height);
+    ctx.lineTo(mapX(b), b.y * canvas.height);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  for (const point of landmarks) {
+    if ((point.visibility ?? 0) < .35) continue;
+    ctx.beginPath();
+    ctx.arc(mapX(point), point.y * canvas.height, Math.max(3, canvas.width / 180), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawFormGuides(canvas: HTMLCanvasElement, drillId: DrillId, landmarks: Point[], violation?: string) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const visible = (index: number) => landmarks[index] && (landmarks[index].visibility ?? 0) > .35;
+  ctx.save();
+  ctx.lineWidth = Math.max(2, canvas.width / 420);
+  ctx.strokeStyle = "rgba(247, 255, 233, .52)";
+  ctx.fillStyle = "rgba(211, 255, 102, .14)";
+  ctx.setLineDash([8, 7]);
+
+  if (drillId === "pushup") {
+    const useLeft = (landmarks[13]?.visibility ?? 0) >= (landmarks[14]?.visibility ?? 0);
+    const shoulder = landmarks[useLeft ? 11 : 12];
+    const hip = landmarks[useLeft ? 23 : 24];
+    const ankle = landmarks[useLeft ? 27 : 28];
+    if (shoulder && hip && ankle) {
+      ctx.beginPath();
+      ctx.moveTo(shoulder.x * canvas.width, shoulder.y * canvas.height);
+      ctx.lineTo(ankle.x * canvas.width, ankle.y * canvas.height);
+      ctx.stroke();
+      if (violation?.toLowerCase().includes("hip")) {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "rgba(255, 174, 102, .95)";
+        ctx.beginPath();
+        ctx.arc(hip.x * canvas.width, hip.y * canvas.height, Math.max(14, canvas.width / 38), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  } else if (drillId === "handstand" && visible(11) && visible(12)) {
+    const centerX = ((landmarks[11].x + landmarks[12].x) / 2) * canvas.width;
+    const half = canvas.width * .055;
+    ctx.fillRect(centerX - half, canvas.height * .07, half * 2, canvas.height * .86);
+    ctx.strokeRect(centerX - half, canvas.height * .07, half * 2, canvas.height * .86);
+  } else if (drillId === "jabCross" && visible(11) && visible(12)) {
+    const leftReach = visible(15) ? Math.abs(landmarks[15].x - landmarks[11].x) : 0;
+    const rightReach = visible(16) ? Math.abs(landmarks[16].x - landmarks[12].x) : 0;
+    const shoulder = landmarks[leftReach >= rightReach ? 11 : 12];
+    const wrist = landmarks[leftReach >= rightReach ? 15 : 16];
+    if (shoulder && wrist) {
+      const dx = wrist.x - shoulder.x;
+      const dy = wrist.y - shoulder.y;
+      const targetX = Math.max(.03, Math.min(.97, wrist.x + dx * .24));
+      const targetY = Math.max(.03, Math.min(.97, wrist.y + dy * .24));
+      ctx.beginPath();
+      ctx.moveTo(wrist.x * canvas.width, wrist.y * canvas.height);
+      ctx.lineTo(targetX * canvas.width, targetY * canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(targetX * canvas.width, targetY * canvas.height, Math.max(12, canvas.width / 45), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 type Props = {
   drillId: DrillId;
+  ghostSessionId?: string;
   preferences: Preferences;
   onExit: () => void;
   onComplete: (session: Session) => void;
@@ -221,7 +315,7 @@ function DistanceMeter({ framing, drillId }: { framing: FramingMetrics | null; d
   );
 }
 
-export default function LiveCoach({ drillId, preferences, onExit, onComplete, level, onPreferencesChange, onStepComplete }: Props) {
+export default function LiveCoach({ drillId, ghostSessionId, preferences, onExit, onComplete, level, onPreferencesChange, onStepComplete }: Props) {
   const activeLevel: DrillLevel = level ?? "beginner";
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -229,6 +323,17 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number>(0);
   const coachRef = useRef(new PoseCoach(drillId));
+  const ghostRecorderRef = useRef(new GhostRecorder());
+  const ghostRaceRef = useRef<GhostSession | undefined>(ghostSessionId ? loadGhostSession(ghostSessionId) : undefined);
+  const raceStartedRef = useRef(!ghostRaceRef.current);
+  const ghostModeRef = useRef<GhostMode>("overlay");
+  const showGhostRef = useRef(true);
+  const showFormGuidesRef = useRef(true);
+  const voiceEnabledRef = useRef(true);
+  const debugModeRef = useRef(false);
+  const performanceRef = useRef({ lastFrameAt: 0, fps: 0, inferenceMs: 0, lastUiAt: 0, lastGhostUiAt: 0 });
+  const workoutEventCursorRef = useRef(initialWorkoutEventCursor());
+  const companionRef = useRef<CompanionModel>(initialCompanionModel());
   const stageRef = useRef<Stage>("idle");
   const sessionStartedAt = useRef<number>(0);
   const calibrationStartedAt = useRef<number>(0);
@@ -276,6 +381,16 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   const rejectionCounts = useRef<Partial<Record<RejectionCode, number>>>({});
   const lastRejection = useRef<FrameRejection | undefined>(undefined);
   const [stage, setStage] = useState<Stage>("idle");
+  const [showCompanion, setShowCompanion] = useState(true);
+  const [animationIntensity, setAnimationIntensity] = useState<"minimal" | "normal">("normal");
+  const [showGhost, setShowGhost] = useState(true);
+  const [showFormGuides, setShowFormGuides] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [ghostMode, setGhostMode] = useState<GhostMode>("overlay");
+  const [debugMode, setDebugMode] = useState(false);
+  const [diagnostics, setDiagnostics] = useState({ fps: 0, inferenceMs: 0, recordingFrames: 0 });
+  const [ghostHud, setGhostHud] = useState({ rep: 0, phase: "ready", repDelta: 0, timeDeltaMs: undefined as number | undefined });
+  const [companion, setCompanion] = useState<CompanionModel>(() => initialCompanionModel());
   const [metrics, setMetrics] = useState<LiveMetrics>(initialMetrics);
   const [events, setEvents] = useState<FormEvent[]>([]);
   const [fixNow, setFixNow] = useState<{ cue: string; rule: string } | null>(null);
@@ -296,7 +411,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
 
   /** Speak a script line now (single-utterance discipline lives in announce). */
   const speakScript = (message: string) => {
-    announce(message, preferencesRef.current);
+    if (voiceEnabledRef.current) announce(message, preferencesRef.current);
   };
 
   /** Persisted manual far-mode toggle (auto-engage on too-far still applies). */
@@ -316,6 +431,16 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   const updateStage = (next: Stage) => {
     stageRef.current = next;
     setStage(next);
+  };
+
+  const pushWorkoutFrame = (snapshot: WorkoutFrameSnapshot, now: number) => {
+    const derived = deriveWorkoutEvents(workoutEventCursorRef.current, snapshot, now);
+    workoutEventCursorRef.current = derived.cursor;
+    if (derived.events.length === 0) return;
+    let next = companionRef.current;
+    for (const workoutEvent of derived.events) next = reduceCompanion(next, workoutEvent);
+    companionRef.current = next;
+    setCompanion(next);
   };
 
   const releaseCamera = useCallback(() => {
@@ -352,7 +477,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
         const { hybridCoaching } = await import("./vlmCoach");
         const { feedback, shouldSpeak } = await hybridCoaching(context);
         if (shouldSpeak && feedback) {
-          announce(feedback, prefs);
+          if (voiceEnabledRef.current) announce(feedback, prefs);
           // Also log the VLM feedback as a separate event
           const vlmEvent: FormEvent = { id: crypto.randomUUID(), cue: `[AI] ${feedback}`, severity: "note", timestamp: now - sessionStartedAt.current };
           eventLog.current = [vlmEvent, ...eventLog.current].slice(0, 100);
@@ -363,7 +488,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
         // VLM failed, fall through to rule-based cue
       }
     }
-    announce(text, preferencesRef.current);
+    if (voiceEnabledRef.current) announce(text, preferencesRef.current);
   };
 
   /** Record verified reps + stable-hold intervals for the saved replay timeline. */
@@ -442,7 +567,19 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
     if (!video || !canvas || !pose) return;
     const now = performance.now();
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const detectStarted = performance.now();
       const result = pose.detectForVideo(video, now);
+      const perf = performanceRef.current;
+      perf.inferenceMs = performance.now() - detectStarted;
+      if (perf.lastFrameAt) {
+        const instantFps = 1000 / Math.max(1, now - perf.lastFrameAt);
+        perf.fps = perf.fps ? perf.fps * .82 + instantFps * .18 : instantFps;
+      }
+      perf.lastFrameAt = now;
+      if (debugModeRef.current && now - perf.lastUiAt > 500) {
+        perf.lastUiAt = now;
+        setDiagnostics({ fps: Math.round(perf.fps), inferenceMs: Math.round(perf.inferenceMs * 10) / 10, recordingFrames: ghostRecorderRef.current.size() });
+      }
       // numPoses:2 path: score the largest/most-central confident pose and
       // decline when >=2 confident poses share the frame (solo-drill guard).
       // Single-pose frames return untouched, preserving legacy behavior.
@@ -455,7 +592,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
           lastFramingUiUpdate.current = now;
           setFraming(null);
         }
-        if (stageRef.current === "active") {
+        if (stageRef.current === "active" && (!ghostRaceRef.current || now >= sessionStartedAt.current)) {
           quality.current.trackingInterrupted = true;
           // Sustained-evidence applies to tracking too: a one-frame dropout
           // must not shout. Quality accounting above is untouched (Task 1
@@ -483,9 +620,54 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
           lastFramingUiUpdate.current = now;
           setFraming(framingNow);
         }
-        const analysis = coachRef.current.inspect(landmarks, now, { personCount: selection.confidentCount });
         const isActive = stageRef.current === "active";
+        const raceCanCount = !ghostRaceRef.current || now >= sessionStartedAt.current;
+        if (isActive && ghostRaceRef.current && raceCanCount && !raceStartedRef.current) {
+          coachRef.current.reset();
+          ghostRecorderRef.current.reset();
+          workoutEventCursorRef.current = initialWorkoutEventCursor();
+          arbiterRef.current = new CueArbiter(drillRef.current);
+          lastRepCount.current = 0;
+          quality.current = { totalFrames: 0, reliableFrames: 0, confidenceTotal: 0, trackingInterrupted: false };
+          raceStartedRef.current = true;
+          speakScript("Go.");
+        }
+        const analysis = coachRef.current.inspect(landmarks, now, { personCount: selection.confidentCount });
         const declined = analysis.status === "declined";
+        if (showFormGuidesRef.current) drawFormGuides(canvas, drillRef.current, landmarks, analysis.violations[0]);
+        if (isActive && raceCanCount && showGhostRef.current && ghostRaceRef.current) {
+          const raceElapsed = Math.max(0, now - sessionStartedAt.current);
+          const ghostFrame = ghostFrameAt(ghostRaceRef.current, raceElapsed);
+          drawGhostPose(canvas, ghostFrame?.landmarks as Point[] | undefined, ghostModeRef.current);
+          const tempo = compareGhostTempo({ liveRep: analysis.repCount, liveElapsedMs: raceElapsed, ghost: ghostRaceRef.current });
+          const perf = performanceRef.current;
+          if (now - perf.lastGhostUiAt > 180) {
+            perf.lastGhostUiAt = now;
+            setGhostHud({ rep: tempo.ghostRep, phase: ghostFrame?.phase ?? "finished", repDelta: tempo.repDelta, timeDeltaMs: tempo.timeDeltaMs });
+          }
+        }
+        if (isActive && raceCanCount) {
+          pushWorkoutFrame(
+            {
+              drillId: drillRef.current,
+              phase: analysis.phase,
+              repCount: analysis.repCount,
+              confidence: analysis.confidence,
+              status: analysis.status,
+              violations: analysis.violations,
+            },
+            now,
+          );
+          ghostRecorderRef.current.add({
+            now,
+            startedAt: sessionStartedAt.current,
+            landmarks,
+            phase: analysis.phase,
+            rep: analysis.repCount,
+            confidence: analysis.confidence,
+            violations: analysis.violations,
+          });
+        }
         const calibrationValid = analysis.confidence >= CALIBRATION_CONFIDENCE && analysis.status === "coaching" && !analysis.rejection;
         if (stageRef.current === "camera") {
           if (calibrationValid) {
@@ -505,7 +687,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
           updateStage("camera");
         }
         let sustainedCue: string | undefined;
-        if (isActive) {
+        if (isActive && raceCanCount) {
           quality.current.totalFrames += 1;
           quality.current.confidenceTotal += analysis.confidence;
           if (calibrationValid) {
@@ -634,6 +816,16 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
       return;
     }
     coachRef.current.reset();
+    ghostRecorderRef.current.reset();
+    workoutEventCursorRef.current = initialWorkoutEventCursor();
+    const startingCompanion = reduceCompanion(initialCompanionModel(), {
+      id: `workout-start-${Math.round(performance.now())}`,
+      type: "WORKOUT_STARTED",
+      at: performance.now(),
+      drillId: drillRef.current,
+    });
+    companionRef.current = startingCompanion;
+    setCompanion(startingCompanion);
     eventLog.current = [];
     arbiterRef.current = new CueArbiter(drillRef.current);
     lastRepCount.current = 0;
@@ -649,13 +841,15 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
     fixNowIdRef.current = null;
     activeCueRef.current = undefined;
     setFixNow(null);
-    sessionStartedAt.current = performance.now();
+    const startAt = performance.now();
+    sessionStartedAt.current = ghostRaceRef.current ? startAt + 3000 : startAt;
+    raceStartedRef.current = !ghostRaceRef.current;
     setEvents([]);
     setElapsed(0);
     quality.current = { totalFrames: 0, reliableFrames: 0, confidenceTotal: 0, trackingInterrupted: false };
     updateStage("active");
     // Task B audio script: drill + level target + stay-close framing tip.
-    speakScript(setStartAnnouncement(drillRef.current, sessionTargetLabel(drillRef.current, activeLevel)));
+    speakScript(ghostRaceRef.current ? "Past-you race. Three, two, one." : setStartAnnouncement(drillRef.current, sessionTargetLabel(drillRef.current, activeLevel)));
   };
 
   const pauseSession = () => {
@@ -763,7 +957,20 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
       holdTimeline,
       ...(partialReps > 0 ? { partialRepTimeline, partialReps } : {}),
     };
-    return { ...draft, bestMoment: bestMomentForSession(draft) };
+    const finished = { ...draft, bestMoment: bestMomentForSession(draft) };
+    try {
+      saveGhostSession(
+        ghostRecorderRef.current.finish({
+          id: finished.id,
+          drillId: sessionDrill,
+          createdAt: finished.createdAt,
+        }),
+      );
+    } catch {
+      // Landmark replay is an enhancement: a storage failure must never lose
+      // the scored workout or break the camera flow.
+    }
+    return finished;
   };
 
   /** Spoken recap input shared by the modal path and workout blocks. */
@@ -1000,7 +1207,8 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   };
 
   const action = stage === "idle" ? startCamera : stage === "ready" ? startSession : undefined;
-  const actionLabel = stage === "idle" ? "Enable camera" : stage === "ready" ? "Start coached set" : "";
+  const actionLabel = stage === "idle" ? "Enable camera" : stage === "ready" ? (ghostRaceRef.current ? "Start Past-You race" : "Start coached set") : "";
+  const raceCountdown = ghostRaceRef.current && stage === "active" ? Math.ceil(Math.max(0, sessionStartedAt.current - performance.now()) / 1000) : 0;
   const calibration = stage === "camera" && calibrationStartedAt.current
     ? Math.min(100, ((performance.now() - calibrationStartedAt.current) / CALIBRATION_HOLD_MS) * 100)
     : stage === "ready" || stage === "active" || stage === "paused" ? 100 : 0;
@@ -1018,7 +1226,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
       <header className="live-header" data-testid="live-header">
         <button className="icon-button" data-testid="exit-coach" onClick={leave} aria-label="Exit live coach">←</button>
         <div className="brand-mini"><span className="brand-mark">S</span><span>STANCELOOP</span></div>
-        <span className="privacy-dot">ON DEVICE</span>
+        <span className="privacy-dot">{ghostRaceRef.current ? "PAST YOU · ON DEVICE" : "ON DEVICE"}</span>
       </header>
 
       <section className="live-layout">
@@ -1034,6 +1242,12 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
             <div className="cue-glass"><span className="cue-label">CORNER CUE</span><p>{metrics.primaryCue}</p></div>
             {metrics.status === "declined" && <div className="rejection-notice" data-testid="rejection-notice"><span className="rejection-label">NOT SCORED</span><p>{metrics.primaryCue}</p></div>}
             {fixNow && metrics.status !== "declined" && <div className="fix-now-overlay" data-testid="fix-now-overlay" role="alert"><span className="fix-now-label">FIX THIS NOW</span><p>{fixNow.cue}</p><small>Rule · {fixNow.rule}</small></div>}
+            {raceCountdown > 0 && <div className="ghost-countdown" data-testid="ghost-countdown"><span>TRAIN AGAINST PAST YOU</span><strong>{raceCountdown}</strong><p>Both timelines start at GO.</p></div>}
+            {ghostRaceRef.current && raceCountdown === 0 && <div className="ghost-race-hud" data-testid="ghost-race-hud"><span>YOU {metrics.repCount}</span><b>{ghostHud.repDelta === 0 ? "NECK & NECK" : ghostHud.repDelta > 0 ? `+${ghostHud.repDelta} REP` : `${ghostHud.repDelta} REP`}</b><span>GHOST {ghostHud.rep}</span>{typeof ghostHud.timeDeltaMs === "number" && <small>{Math.abs(ghostHud.timeDeltaMs / 1000).toFixed(1)}s {ghostHud.timeDeltaMs > 0 ? "behind past rep timing" : "ahead of past rep timing"}</small>}</div>}
+            {showCompanion && <div className={`ar-companion companion-${companion.state} ${animationIntensity === "minimal" ? "companion-minimal" : ""}`} data-testid="ar-companion" aria-live="polite">
+              <CompanionAvatar drillId={activeDrillId} phase={metrics.phase} state={companion.state} />
+              <div><b>{companion.state.replaceAll("-", " ").toUpperCase()}</b><p>{companion.message}</p></div>
+            </div>}
             {stage === "paused" && <div className="paused-banner" data-testid="paused-banner"><strong>Paused — timers frozen.</strong><p>Resume when you are reset. No cues will burst on resume.</p></div>}
           </>}
           {farActive && <div className={`far-mode ${farWashClassName(wash)}`} data-testid="far-mode"><strong data-testid="far-status">{farStatusLabel(wash)}</strong><div className="far-count" data-testid="far-reps">{activeDrillId === "handstand" ? `${metrics.holdSeconds}s` : metrics.repCount}</div><p data-testid="far-cue">{fixNow?.cue ?? metrics.primaryCue}</p></div>}
@@ -1054,12 +1268,12 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
             <div className="progress-line"><i style={{ width: `${calibration}%` }} /></div>
             <p>{stage === "camera" ? "Hold still in your complete setup for 3 seconds." : activeDrillId === "handstand" ? "Full body, stable camera, clean light." : "Upper body in frame, stable camera, clean light."}</p>
           </div>
-          <div className="live-prefs"><label>SCRIPT VOICE <select data-testid="verbosity-select" value={normalizeVerbosity(preferences.scriptVerbosity)} onChange={(event) => changeVerbosity(event.target.value as ScriptVerbosity)}><option value="every-rep">Every rep</option><option value="milestones-only">Milestones only</option><option value="minimal">Minimal</option></select></label><button className="subtle-button" data-testid="far-mode-toggle" onClick={toggleFarMode} aria-pressed={preferences.farMode === true}>{preferences.farMode ? "Far mode: on" : "Far mode: off"}</button>{preferences.vlm.enabled && <div className="vlm-status"><span className="vlm-indicator" style={{ background: preferences.vlm.enabled ? "#00d4aa" : "#ff4444" }} /><span>AI Coaching: {preferences.vlm.provider} ({preferences.vlm.model})</span></div>}</div>
+          <div className="live-prefs"><label>SCRIPT VOICE <select data-testid="verbosity-select" value={normalizeVerbosity(preferences.scriptVerbosity)} onChange={(event) => changeVerbosity(event.target.value as ScriptVerbosity)}><option value="every-rep">Every rep</option><option value="milestones-only">Milestones only</option><option value="minimal">Minimal</option></select></label><button className="subtle-button" onClick={() => { const next = !voiceEnabled; setVoiceEnabled(next); voiceEnabledRef.current = next; }}>{voiceEnabled ? "Voice: on" : "Voice: off"}</button><button className="subtle-button" onClick={() => setShowCompanion((value) => !value)}>{showCompanion ? "Companion: on" : "Companion: off"}</button><button className="subtle-button" onClick={() => setAnimationIntensity((value) => value === "normal" ? "minimal" : "normal")}>Animation: {animationIntensity}</button><button className="subtle-button" onClick={() => { const next = !showFormGuides; setShowFormGuides(next); showFormGuidesRef.current = next; }}>{showFormGuides ? "Form guides: on" : "Form guides: off"}</button>{ghostRaceRef.current && <><button className="subtle-button" onClick={() => { const next = !showGhost; setShowGhost(next); showGhostRef.current = next; }}>{showGhost ? "Ghost: on" : "Ghost: off"}</button><label>GHOST MODE<select value={ghostMode} onChange={(event) => { const next = event.target.value as GhostMode; setGhostMode(next); ghostModeRef.current = next; }}><option value="overlay">Overlay</option><option value="side-by-side">Side-by-side</option><option value="tempo">Tempo race</option></select></label></>}<button className="subtle-button" data-testid="debug-mode-toggle" onClick={() => { const next = !debugMode; setDebugMode(next); debugModeRef.current = next; }}>{debugMode ? "Motion debug: on" : "Motion debug: off"}</button><button className="subtle-button" data-testid="far-mode-toggle" onClick={toggleFarMode} aria-pressed={preferences.farMode === true}>{preferences.farMode ? "Far mode: on" : "Far mode: off"}</button>{preferences.vlm.enabled && <div className="vlm-status"><span className="vlm-indicator" style={{ background: preferences.vlm.enabled ? "#00d4aa" : "#ff4444" }} /><span>AI Coaching: {preferences.vlm.provider} ({preferences.vlm.model})</span></div>}</div>{debugMode && <div className="motion-debug" data-testid="motion-debug"><span className="kicker">MOTION DEBUG VIEW</span><div><p>FPS <b>{diagnostics.fps || "—"}</b></p><p>POSE INFERENCE <b>{diagnostics.inferenceMs || "—"} ms</b></p><p>CONFIDENCE <b>{Math.round(metrics.confidence * 100)}%</b></p><p>STATE <b>{metrics.phase}</b></p><p>REP <b>{metrics.repCount}</b></p><p>REC BUFFER <b>{diagnostics.recordingFrames} frames</b></p></div></div>}
           {events.length > 0 && <div className="event-list"><span>THIS SET</span>{events.map((event) => <div key={event.id} className={event.severity}><i />{event.cue}</div>)}</div>}
           {error && <div className="camera-error">{error}</div>}
           <div className="coach-actions">
             {action && <button className="primary-button" data-testid={stage === "idle" ? "enable-camera" : "start-set"} onClick={action}>{actionLabel}<span>→</span></button>}
-            {!workoutActive && (stage === "idle" || stage === "camera" || stage === "ready") && <button className="subtle-button" data-testid="start-guided-workout" onClick={startGuidedWorkout}>Start guided workout <span>→</span></button>}
+            {!ghostRaceRef.current && !workoutActive && (stage === "idle" || stage === "camera" || stage === "ready") && <button className="subtle-button" data-testid="start-guided-workout" onClick={startGuidedWorkout}>Start guided workout <span>→</span></button>}
             {stage === "camera" && <button className="subtle-button" data-testid="cancel-camera" onClick={leave}>Cancel camera</button>}
             {stage === "active" && <>
               <button className="subtle-button" data-testid="pause-set" onClick={pauseSession}>Pause set <span>❚❚</span></button>

@@ -126,10 +126,23 @@ export function isGhostSession(value: unknown): value is GhostSession {
 export function migrateGhostSession(value: unknown): GhostSession | undefined {
   if (isGhostSession(value)) return value;
   if (!value || typeof value !== "object") return undefined;
-  const legacy = value as Partial<GhostSession> & { version?: number };
+  const legacy = value as {
+    version?: number;
+    id?: unknown;
+    drillId?: unknown;
+    createdAt?: unknown;
+    durationMs?: unknown;
+    frameIntervalMs?: unknown;
+    frames?: unknown;
+  };
   // Safe v0 migration: only landmark-shaped records are accepted. Anything
   // carrying media payload-like fields is rejected rather than normalized.
-  if (legacy.version !== 0 || !legacy.id || !legacy.drillId || !Array.isArray(legacy.frames)) return undefined;
+  if (
+    legacy.version !== 0 ||
+    typeof legacy.id !== "string" ||
+    (legacy.drillId !== "pushup" && legacy.drillId !== "handstand" && legacy.drillId !== "jabCross") ||
+    !Array.isArray(legacy.frames)
+  ) return undefined;
   const unsafe = value as Record<string, unknown>;
   if ("video" in unsafe || "blob" in unsafe || "imageData" in unsafe || "framesBase64" in unsafe) return undefined;
   const migrated = {

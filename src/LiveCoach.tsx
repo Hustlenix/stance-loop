@@ -6,6 +6,7 @@ import { effectiveFarMode, farStatusLabel, farWashClassName, farWashFor } from "
 import { sessionTargetLabel } from "./library";
 import { PoseCoach, poseConnections } from "./poseEngine";
 import { initialCompanionModel, reduceCompanion, type CompanionModel } from "./companionEngine";
+import CompanionAvatar from "./CompanionAvatar";
 import { GhostRecorder, compareGhostTempo, ghostFrameAt, loadGhostSession, saveGhostSession, type GhostSession } from "./ghostSessions";
 import { deriveWorkoutEvents, initialWorkoutEventCursor, type WorkoutFrameSnapshot } from "./workoutEvents";
 import {
@@ -1243,7 +1244,7 @@ export default function LiveCoach({ drillId, ghostSessionId, preferences, onExit
             {raceCountdown > 0 && <div className="ghost-countdown" data-testid="ghost-countdown"><span>TRAIN AGAINST PAST YOU</span><strong>{raceCountdown}</strong><p>Both timelines start at GO.</p></div>}
             {ghostRaceRef.current && raceCountdown === 0 && <div className="ghost-race-hud" data-testid="ghost-race-hud"><span>YOU {metrics.repCount}</span><b>{ghostHud.repDelta === 0 ? "NECK & NECK" : ghostHud.repDelta > 0 ? `+${ghostHud.repDelta} REP` : `${ghostHud.repDelta} REP`}</b><span>GHOST {ghostHud.rep}</span>{typeof ghostHud.timeDeltaMs === "number" && <small>{Math.abs(ghostHud.timeDeltaMs / 1000).toFixed(1)}s {ghostHud.timeDeltaMs > 0 ? "behind past rep timing" : "ahead of past rep timing"}</small>}</div>}
             {showCompanion && <div className={`ar-companion companion-${companion.state}`} data-testid="ar-companion" aria-live="polite">
-              <span className="companion-orb" aria-hidden="true"><i /><i /></span>
+              <CompanionAvatar drillId={activeDrillId} phase={metrics.phase} state={companion.state} />
               <div><b>{companion.state.replaceAll("-", " ").toUpperCase()}</b><p>{companion.message}</p></div>
             </div>}
             {stage === "paused" && <div className="paused-banner" data-testid="paused-banner"><strong>Paused — timers frozen.</strong><p>Resume when you are reset. No cues will burst on resume.</p></div>}

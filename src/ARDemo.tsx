@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import PoseViz from "./PoseViz";
+import CompanionAvatar from "./CompanionAvatar";
 import { demoCompanionAt, demoGhostSession } from "./demoSession";
 import { ghostFrameAt } from "./ghostSessions";
 
@@ -47,7 +48,7 @@ export default function ARDemo({ onClose }: Props) {
         <PoseViz landmarks={frame?.landmarks} className="demo-live-pose" label="Demo athlete pose" offsetX={showingGhost ? -0.12 : 0} scaleX={showingGhost ? .78 : 1} />
         {showingGhost && <PoseViz landmarks={pastFrame?.landmarks} className="demo-ghost-pose" label="Past-you ghost pose" offsetX={.38} scaleX={.58} />}
         <div className="demo-tags"><span>LIVE YOU</span>{showingGhost && <span>PAST YOU · LANDMARK GHOST</span>}</div>
-        <div className={`demo-companion companion-${companion.state}`}><span className="companion-orb"><i /><i /></span><div><b>{companion.state.replaceAll("-", " ").toUpperCase()}</b><p>{companion.message}</p></div></div>
+        <div className={`demo-companion companion-${companion.state}`}><CompanionAvatar drillId="pushup" phase={frame?.phase ?? "ready"} state={companion.state} /><div><b>{companion.state.replaceAll("-", " ").toUpperCase()}</b><p>{companion.message}</p></div></div>
         {frame?.violations?.[0] && <div className="demo-correction">↟ {frame.violations[0]}</div>}
       </div>
       <div className="demo-progress"><i style={{ width: `${progress}%` }} /></div>

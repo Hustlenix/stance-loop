@@ -1,7 +1,8 @@
-import type { DrillId, Point } from "./types";
+import type { DrillId, Point, Session } from "./types";
 
 export const GHOST_SESSION_VERSION = 1;
 export const DEFAULT_RECORD_INTERVAL_MS = 100;
+export const GHOST_STORAGE_PREFIX = "stanceloop:ghost:";
 
 export type GhostPoseFrame = {
   t: number;
@@ -31,6 +32,16 @@ export type GhostFrameInput = {
   rep: number;
   confidence: number;
   violations?: string[];
+};
+
+export type GhostCompatibility =
+  | { compatible: true; note?: string }
+  | { compatible: false; reason: string };
+
+export type GhostStorageSummary = {
+  recordings: number;
+  frames: number;
+  bytes: number;
 };
 
 export class GhostRecorder {
@@ -96,7 +107,9 @@ export function isGhostSession(value: unknown): value is GhostSession {
     (candidate.drillId === "pushup" ||
       candidate.drillId === "handstand" ||
       candidate.drillId === "jabCross") &&
+    typeof candidate.createdAt === "number" &&
     Number.isFinite(candidate.durationMs) &&
+    typeof candidate.frameIntervalMs === "number" &&
     Array.isArray(candidate.frames) &&
     candidate.frames.every(
       (frame) =>
@@ -147,7 +160,44 @@ export function ghostFrameAt(session: GhostSession, timeMs: number): GhostPoseFr
   };
 }
 
-export const ghostStorageKey = (id: string) => `stanceloop:ghost:${id}`;
+export function ghostCompatibility(
+  ghost: GhostSession,
+  current: Pick<Session, "drillId" | "protocol"> | { drillId: DrillId; protocol?: Session["protocol"] },
+): GhostCompatibility {
+  if (ghost.drillId !== current.drillId) {
+    return { compatible: false, reason: "That recording is for a different drill." };
+  }
+  if (!ghost.frames.length || ghost.durationMs <= 0) {
+    return { compatible: false, reason: "That recording has no usable landmark timeline." };
+  }
+  if (current.protocol?.mirrored === false) {
+    return {
+      compatible: true,
+      note: "Camera mirroring differs from the usual preview. Treat overlay alignment as approximate.",
+    };
+  }
+  return { compatible: true };
+}
+
+export function ghostRepAt(session: GhostSession, timeMs: number): number {
+  return ghostFrameAt(session, timeMs)?.rep ?? 0;
+}
+
+export function compareGhostTempo(input: {
+  liveRep: number;
+  liveElapsedMs: number;
+  ghost: GhostSession;
+}): { ghostRep: number; repDelta: number; timeDeltaMs?: number } {
+  const ghostRep = ghostRepAt(input.ghost, input.liveElapsedMs);
+  const targetRepFrame = input.ghost.frames.find((frame) => frame.rep >= input.liveRep && input.liveRep > 0);
+  return {
+    ghostRep,
+    repDelta: input.liveRep - ghostRep,
+    ...(targetRepFrame ? { timeDeltaMs: input.liveElapsedMs - targetRepFrame.t } : {}),
+  };
+}
+
+export const ghostStorageKey = (id: string) => `${GHOST_STORAGE_PREFIX}${id}`;
 
 export function saveGhostSession(session: GhostSession): void {
   if (!isGhostSession(session)) throw new Error("Invalid ghost session.");
@@ -165,6 +215,60 @@ export function loadGhostSession(id: string): GhostSession | undefined {
   }
 }
 
+export function hasGhostSession(id: string): boolean {
+  return loadGhostSession(id) !== undefined;
+}
+
+export function listGhostSessions(): GhostSession[] {
+  const sessions: GhostSession[] = [];
+  for (let index = 0; index < window.localStorage.length; index++) {
+    const key = window.localStorage.key(index);
+    if (!key?.startsWith(GHOST_STORAGE_PREFIX)) continue;
+    const session = loadGhostSession(key.slice(GHOST_STORAGE_PREFIX.length));
+    if (session) sessions.push(session);
+  }
+  return sessions.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export function ghostStorageSummary(): GhostStorageSummary {
+  let bytes = 0;
+  let frames = 0;
+  const recordings = listGhostSessions();
+  for (const session of recordings) {
+    const serialized = JSON.stringify(session);
+    bytes += new Blob([serialized]).size;
+    frames += session.frames.length;
+  }
+  return { recordings: recordings.length, frames, bytes };
+}
+
 export function deleteGhostSession(id: string): void {
   window.localStorage.removeItem(ghostStorageKey(id));
+}
+
+export function clearGhostSessions(): void {
+  const keys: string[] = [];
+  for (let index = 0; index < window.localStorage.length; index++) {
+    const key = window.localStorage.key(index);
+    if (key?.startsWith(GHOST_STORAGE_PREFIX)) keys.push(key);
+  }
+  keys.forEach((key) => window.localStorage.removeItem(key));
+}
+
+export function buildGhostExport(): {
+  app: "stanceloop";
+  kind: "landmark-only-ghost-export";
+  version: 1;
+  exportedAt: number;
+  rawVideoStored: false;
+  recordings: GhostSession[];
+} {
+  return {
+    app: "stanceloop",
+    kind: "landmark-only-ghost-export",
+    version: 1,
+    exportedAt: Date.now(),
+    rawVideoStored: false,
+    recordings: listGhostSessions(),
+  };
 }

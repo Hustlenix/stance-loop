@@ -445,3 +445,56 @@ test("first-run consent gate blocks onboarding until terms are accepted", async 
   await expect(page.getByTestId("onboarding-modal")).toBeVisible();
   await page.screenshot({ path: path.join(artifactsDir, "09-onboarding.png") });
 });
+
+test("AR reviewer demo explains the feature without camera access", async ({ page }) => {
+  const seed = baseSeed();
+  await seed(page);
+  await page.goto("/");
+
+  await page.getByTestId("try-ar-demo").click();
+  await expect(page.getByTestId("ar-demo")).toBeVisible();
+  await expect(page.getByTestId("ar-demo")).toContainText("TRY AR DEMO");
+  await expect(page.getByTestId("ar-demo")).toContainText("NO CAMERA REQUIRED");
+  await expect(page.getByTestId("ar-demo")).toContainText("pose landmarks only");
+  await expect(page.getByRole("button", { name: /Pause demo|Replay demo|Resume demo/ })).toBeVisible();
+});
+
+test("landmark session opens Replay Lab and enters Past-You mode", async ({ page }) => {
+  const seed = baseSeed();
+  await seed(page);
+  await page.addInitScript(() => {
+    const landmarks = Array.from({ length: 33 }, (_, index) => ({
+      x: 0.25 + (index % 6) * 0.06,
+      y: 0.2 + (index % 8) * 0.06,
+      visibility: 0.98,
+    }));
+    localStorage.setItem("stanceloop:ghost:s-valid-pushup-1", JSON.stringify({
+      version: 1,
+      id: "s-valid-pushup-1",
+      drillId: "pushup",
+      createdAt: Date.now() - 3 * 60 * 60 * 1000,
+      durationMs: 1000,
+      frameIntervalMs: 100,
+      rawVideoStored: false,
+      frames: [
+        { t: 0, landmarks, phase: "ready", rep: 0, confidence: 0.96 },
+        { t: 1000, landmarks, phase: "ready", rep: 1, confidence: 0.97 },
+      ],
+    }));
+  });
+  await page.goto("/");
+
+  await page.locator('[data-session-id="s-valid-pushup-1"]').click();
+  await expect(page.getByTestId("open-replay-lab")).toBeVisible();
+  await expect(page.getByTestId("train-against-past-session")).toBeVisible();
+  await page.getByTestId("open-replay-lab").click();
+
+  await expect(page.getByTestId("replay-lab")).toBeVisible();
+  await expect(page.getByTestId("replay-lab")).toContainText("ZERO VIDEO STORED");
+  await expect(page.getByTestId("replay-lab")).toContainText("rawVideoStored = false");
+  await page.getByTestId("train-against-past").click();
+
+  await expect(page.getByTestId("live-page")).toBeVisible();
+  await expect(page.getByTestId("live-header")).toContainText("PAST YOU");
+  await expect(page.getByRole("button", { name: "Enable camera" })).toBeVisible();
+});

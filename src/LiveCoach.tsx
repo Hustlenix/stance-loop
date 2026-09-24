@@ -5,6 +5,9 @@ import { drillById } from "./data";
 import { effectiveFarMode, farStatusLabel, farWashClassName, farWashFor } from "./farMode";
 import { sessionTargetLabel } from "./library";
 import { PoseCoach, poseConnections } from "./poseEngine";
+import { initialCompanionModel, reduceCompanion, type CompanionModel } from "./companionEngine";
+import { GhostRecorder, saveGhostSession } from "./ghostSessions";
+import { deriveWorkoutEvents, initialWorkoutEventCursor, type WorkoutFrameSnapshot } from "./workoutEvents";
 import {
   CALIBRATION_CONFIDENCE,
   CALIBRATION_HOLD_MS,
@@ -229,6 +232,9 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number>(0);
   const coachRef = useRef(new PoseCoach(drillId));
+  const ghostRecorderRef = useRef(new GhostRecorder());
+  const workoutEventCursorRef = useRef(initialWorkoutEventCursor());
+  const companionRef = useRef<CompanionModel>(initialCompanionModel());
   const stageRef = useRef<Stage>("idle");
   const sessionStartedAt = useRef<number>(0);
   const calibrationStartedAt = useRef<number>(0);
@@ -276,6 +282,7 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   const rejectionCounts = useRef<Partial<Record<RejectionCode, number>>>({});
   const lastRejection = useRef<FrameRejection | undefined>(undefined);
   const [stage, setStage] = useState<Stage>("idle");
+  const [companion, setCompanion] = useState<CompanionModel>(() => initialCompanionModel());
   const [metrics, setMetrics] = useState<LiveMetrics>(initialMetrics);
   const [events, setEvents] = useState<FormEvent[]>([]);
   const [fixNow, setFixNow] = useState<{ cue: string; rule: string } | null>(null);
@@ -316,6 +323,16 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
   const updateStage = (next: Stage) => {
     stageRef.current = next;
     setStage(next);
+  };
+
+  const pushWorkoutFrame = (snapshot: WorkoutFrameSnapshot, now: number) => {
+    const derived = deriveWorkoutEvents(workoutEventCursorRef.current, snapshot, now);
+    workoutEventCursorRef.current = derived.cursor;
+    if (derived.events.length === 0) return;
+    let next = companionRef.current;
+    for (const workoutEvent of derived.events) next = reduceCompanion(next, workoutEvent);
+    companionRef.current = next;
+    setCompanion(next);
   };
 
   const releaseCamera = useCallback(() => {
@@ -486,6 +503,28 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
         const analysis = coachRef.current.inspect(landmarks, now, { personCount: selection.confidentCount });
         const isActive = stageRef.current === "active";
         const declined = analysis.status === "declined";
+        if (isActive) {
+          pushWorkoutFrame(
+            {
+              drillId: drillRef.current,
+              phase: analysis.phase,
+              repCount: analysis.repCount,
+              confidence: analysis.confidence,
+              status: analysis.status,
+              violations: analysis.violations,
+            },
+            now,
+          );
+          ghostRecorderRef.current.add({
+            now,
+            startedAt: sessionStartedAt.current,
+            landmarks,
+            phase: analysis.phase,
+            rep: analysis.repCount,
+            confidence: analysis.confidence,
+            violations: analysis.violations,
+          });
+        }
         const calibrationValid = analysis.confidence >= CALIBRATION_CONFIDENCE && analysis.status === "coaching" && !analysis.rejection;
         if (stageRef.current === "camera") {
           if (calibrationValid) {
@@ -634,6 +673,16 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
       return;
     }
     coachRef.current.reset();
+    ghostRecorderRef.current.reset();
+    workoutEventCursorRef.current = initialWorkoutEventCursor();
+    const startingCompanion = reduceCompanion(initialCompanionModel(), {
+      id: `workout-start-${Math.round(performance.now())}`,
+      type: "WORKOUT_STARTED",
+      at: performance.now(),
+      drillId: drillRef.current,
+    });
+    companionRef.current = startingCompanion;
+    setCompanion(startingCompanion);
     eventLog.current = [];
     arbiterRef.current = new CueArbiter(drillRef.current);
     lastRepCount.current = 0;
@@ -763,7 +812,20 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
       holdTimeline,
       ...(partialReps > 0 ? { partialRepTimeline, partialReps } : {}),
     };
-    return { ...draft, bestMoment: bestMomentForSession(draft) };
+    const finished = { ...draft, bestMoment: bestMomentForSession(draft) };
+    try {
+      saveGhostSession(
+        ghostRecorderRef.current.finish({
+          id: finished.id,
+          drillId: sessionDrill,
+          createdAt: finished.createdAt,
+        }),
+      );
+    } catch {
+      // Landmark replay is an enhancement: a storage failure must never lose
+      // the scored workout or break the camera flow.
+    }
+    return finished;
   };
 
   /** Spoken recap input shared by the modal path and workout blocks. */
@@ -1034,6 +1096,10 @@ export default function LiveCoach({ drillId, preferences, onExit, onComplete, le
             <div className="cue-glass"><span className="cue-label">CORNER CUE</span><p>{metrics.primaryCue}</p></div>
             {metrics.status === "declined" && <div className="rejection-notice" data-testid="rejection-notice"><span className="rejection-label">NOT SCORED</span><p>{metrics.primaryCue}</p></div>}
             {fixNow && metrics.status !== "declined" && <div className="fix-now-overlay" data-testid="fix-now-overlay" role="alert"><span className="fix-now-label">FIX THIS NOW</span><p>{fixNow.cue}</p><small>Rule · {fixNow.rule}</small></div>}
+            <div className={`ar-companion companion-${companion.state}`} data-testid="ar-companion" aria-live="polite">
+              <span className="companion-orb" aria-hidden="true"><i /><i /></span>
+              <div><b>{companion.state.replaceAll("-", " ").toUpperCase()}</b><p>{companion.message}</p></div>
+            </div>
             {stage === "paused" && <div className="paused-banner" data-testid="paused-banner"><strong>Paused — timers frozen.</strong><p>Resume when you are reset. No cues will burst on resume.</p></div>}
           </>}
           {farActive && <div className={`far-mode ${farWashClassName(wash)}`} data-testid="far-mode"><strong data-testid="far-status">{farStatusLabel(wash)}</strong><div className="far-count" data-testid="far-reps">{activeDrillId === "handstand" ? `${metrics.holdSeconds}s` : metrics.repCount}</div><p data-testid="far-cue">{fixNow?.cue ?? metrics.primaryCue}</p></div>}
